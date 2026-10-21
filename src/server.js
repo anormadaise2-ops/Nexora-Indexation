@@ -6,6 +6,7 @@ const net = require('node:net');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3080);
+const HOST = process.env.HOST || '127.0.0.1';
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -135,7 +136,7 @@ function getTag(html, tag, attr) {
   const re = new RegExp('<' + tag + '\\b([^>]*)>', 'i');
   const m = html.match(re);
   if (!m) return '';
-  const a = m[1].match(new RegExp("\\b" + attr + "\\s*=\\s*[" + String.fromCharCode(34,39) + "]([^" + String.fromCharCode(34,39) + "]*)[" + String.fromCharCode(34,39) + "]", "i"));
+  const a = m[1].match(new RegExp("\\b" + attr + "\\s*=\\s*[\"']([^\"']*)[\"']", "i"));
   return a ? decodeEntities(a[1]) : '';
 }
 function extractLinks(html, baseUrl) {
@@ -292,7 +293,7 @@ async function crawlSite(siteId, seedUrls = []) {
 }
 function asyncRoute(fn) { return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next); }
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'Nexora Indexation', version: '1.0.0' }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, name: 'Nexora Indexation', version: '2.0.0', sitesCount: db.sites.length, indexedCount: db.pages.filter(p => p.status === 'indexed').length, jobsCount: db.jobs.length }));
 
 app.get('/api/sites', (_req, res) => {
   res.json(db.sites.map(s => ({
@@ -329,7 +330,7 @@ app.post('/api/sites/:id/verify', asyncRoute(async (req, res) => {
       if (!r.ok) throw new Error(`La page d'accueil répond HTTP ${r.status}.`);
       const html = (await r.text()).slice(0, 2_000_000);
       const token = site.verificationToken;
-      const metaOk = (html.match(/<meta\b[^>]*>/gi) || []).some(tag => /name\s*=\s*["']nexora-site-verification["']/i.test(tag) && /content\s*=\s*["']/i.test(tag) && tag.includes(token));
+      const metaOk = new RegExp("<meta\\b(?=[^>]*name\\s*=\\s*[\"']nexora-site-verification[\"'])(?=[^>]*content\\s*=\\s*[\"']" + token + "[\"'])[^>]*>", "i").test(html);
       if (!metaOk) throw new Error('Balise META introuvable. Ajoute la balise indiquée dans le tableau de bord.');
     } else if (method === 'file') {
       const r = await safeFetch(site.origin + '/.well-known/nexora-verification.txt', { accept: 'text/plain,*/*;q=0.5' });
@@ -405,6 +406,6 @@ app.use((err, _req, res, _next) => {
   res.status(400).json({ error: err.message || 'Erreur inattendue.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Nexora Indexation démarré : http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Nexora Indexation démarré : http://${HOST}:${PORT}`);
 });

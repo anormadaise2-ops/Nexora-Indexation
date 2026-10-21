@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nexora Indexation</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-icon">N</span><div><b>NEXORA</b><small>INDEXATION</small></div></div>
+    <div class="nav-label">ESPACE WEBMASTER</div>
+    <button class="nav active" data-view="overview">▦ <span>Vue d'ensemble</span></button>
+    <button class="nav" data-view="sites">◎ <span>Mes sites</span></button>
+    <button class="nav" data-view="pages">▤ <span>Pages indexées</span></button>
+    <button class="nav" data-view="search">⌕ <span>Tester la recherche</span></button>
+    <div class="sidebar-bottom"><div class="status-dot"></div><span>Service local actif</span><small id="version">v1.0</small></div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div><div class="eyebrow">CENTRE DE CONTRÔLE</div><h1 id="page-title">Vue d'ensemble</h1></div>
+      <button class="button primary" id="add-top">＋ Ajouter un site</button>
+    </header>
+    <section id="overview-view" class="view">
+      <div class="hero">
+        <div><div class="pill">● CRAWLER NEXORABOT</div><h2>Votre Web.<br><span>Votre index.</span></h2><p>Ajoutez vos propriétés, vérifiez leur contrôle et lancez l'exploration des pages publiques.</p><button class="button light" id="hero-add">Ajouter une propriété <b>→</b></button></div>
+        <div class="hero-art"><div class="orbit orbit1"></div><div class="orbit orbit2"></div><div class="globe">N</div><div class="float-card card-a">↗ <b>Exploration</b><small>Pages découvertes</small></div><div class="float-card card-b">✓ <b>Vérification</b><small>Propriété sécurisée</small></div></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-icon blue">◎</div><span>Sites enregistrés</span><strong id="stat-sites">0</strong><small>Propriétés ajoutées</small></div>
+        <div class="stat"><div class="stat-icon green">✓</div><span>Sites vérifiés</span><strong id="stat-verified">0</strong><small>Prêts à explorer</small></div>
+        <div class="stat"><div class="stat-icon purple">▤</div><span>Pages indexées</span><strong id="stat-pages">0</strong><small>Dans votre index local</small></div>
+        <div class="stat"><div class="stat-icon orange">↻</div><span>Explorations</span><strong id="stat-jobs">0</strong><small>Jobs récents</small></div>
+      </div>
+      <div class="section-head"><div><h3>Vos propriétés</h3><p>État de vos sites enregistrés</p></div><button class="button outline" data-goto="sites">Voir tous les sites →</button></div>
+      <div id="overview-sites" class="site-grid"></div>
+      <div class="section-head"><div><h3>Activité récente</h3><p>Dernières tâches du crawler</p></div></div>
+      <div id="jobs-list" class="panel empty">Aucune exploration pour le moment.</div>
+    </section>
+    <section id="sites-view" class="view hidden">
+      <div class="section-head"><div><h3>Mes sites</h3><p>Ajoutez et vérifiez les sites que vous gérez.</p></div><button class="button primary" id="add-site">＋ Ajouter un site</button></div>
+      <div id="sites-list" class="site-list"></div>
+    </section>
+    <section id="pages-view" class="view hidden">
+      <div class="section-head"><div><h3>Pages explorées</h3><p>Pages découvertes par NexoraBot.</p></div><select id="page-site-filter"><option value="">Tous les sites</option></select></div>
+      <div id="pages-list" class="panel empty">Ajoutez et vérifiez un site, puis lancez une exploration.</div>
+    </section>
+    <section id="search-view" class="view hidden">
+      <div class="search-hero"><div class="eyebrow">NEXORA SEARCH</div><h2>Rechercher dans votre index</h2><p>Essayez une recherche dans les pages que votre crawler a indexées.</p>
+        <form id="search-form" class="searchbar"><span>⌕</span><input id="search-query" placeholder="Ex. guide, actualités, accueil…" minlength="2"><button class="button primary">Rechercher</button></form>
+      </div><div id="search-results"></div>
+    </section>
+  </main>
+
+  <dialog id="add-dialog">
+    <form id="add-form" method="dialog">
+      <div class="dialog-head"><div><div class="eyebrow">NOUVELLE PROPRIÉTÉ</div><h2>Ajouter un site</h2></div><button type="button" class="close" data-close>×</button></div>
+      <label for="site-url">URL du site</label><input id="site-url" required placeholder="https://monsite.fr" type="url">
+      <label for="verify-method">Méthode de vérification</label><select id="verify-method"><option value="meta">Balise META (recommandé)</option><option value="file">Fichier de vérification</option><option value="dns">Enregistrement DNS TXT</option></select>
+      <div class="hint">Vous devez contrôler le site pour prouver que vous êtes autorisé à le soumettre.</div>
+      <div id="add-error" class="error hidden"></div>
+      <div class="dialog-actions"><button type="button" class="button outline" data-close>Annuler</button><button class="button primary" id="create-site-btn">Créer la propriété</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="site-dialog"><div id="site-detail"></div></dialog>
+  <div id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

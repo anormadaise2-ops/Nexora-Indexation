@@ -1,69 +1,33 @@
-# Nexora Indexation — logiciel de crawl et d'indexation
+# Nexora Indexation — interface complète et serveur local persistant
 
-Application locale de type webmaster tools avec :
-- ajout de propriétés de site ;
-- vérification de contrôle par balise META, fichier `.well-known` ou DNS TXT ;
-- découverte et vérification de sitemap XML ;
-- crawler `NexoraBot` avec prise en compte basique de `robots.txt` ;
-- extraction du titre, description, texte, URL canonique et liens internes ;
-- liste des pages explorées et recherche dans l'index local ;
-- sauvegarde persistante dans `data/db.json`.
+Interface d'accueil moderne personnalisable (thèmes clair/sombre, cinq accents), recherche dans les pages déjà indexées, soumission de propriétés, tableau de bord webmaster, vérification de propriété, sitemap XML, crawler NexoraBot et index local JSON persistant.
 
-## Prérequis
+## Lancer manuellement
 
-- Node.js 20 ou plus récent
-- npm
+Prérequis : Node.js 20 ou supérieur.
 
-## Installation et lancement
-
-Dans le dossier du projet :
-
-```bash
+```powershell
 npm install
 npm start
 ```
 
-Puis ouvrir **http://localhost:3080** dans le navigateur.
+Ouvrir `http://127.0.0.1:3080` ou le tableau de bord `http://127.0.0.1:3080/dashboard.html`.
 
-Pour changer le port sous Windows PowerShell :
+## Démarrage persistant sous Windows
 
-```powershell
-$env:PORT=3090
-npm start
-```
+Lancer `Install-Nexora.ps1` du paquet complet. Le script copie les fichiers du projet vers `%USERPROFILE%\Downloads\NexoraIndexation\NexoraIndexation`, sauvegarde les principaux anciens fichiers, installe les dépendances et crée une tâche planifiée qui lance le serveur à chaque ouverture de session. Le superviseur redémarre Node si le serveur s'arrête.
 
-## Vérification de propriété
+Le serveur écoute par défaut sur `127.0.0.1` pour ne pas exposer sans authentification le panneau webmaster et le crawler sur Internet. Les données se trouvent dans `data/db.json` et les journaux dans `logs/server.log`; ces dossiers ne doivent pas être publiés dans Git.
 
-### Balise META
-Ajoutez dans le `<head>` de la page d'accueil la balise exacte fournie dans le tableau de bord, par exemple :
+## Fonctionnement
 
-```html
-<meta name="nexora-site-verification" content="JETON_AFFICHE_PAR_LE_TABLEAU_DE_BORD">
-```
+1. Ouvrir la page d'accueil et soumettre une URL publique.
+2. Copier le jeton META fourni dans le `<head>` du site à vérifier.
+3. Ouvrir « Espace Webmaster », vérifier la propriété, fournir un sitemap XML puis lancer le crawler.
+4. Rechercher dans les pages indexées depuis la page d'accueil.
 
-### Fichier
-Créer `/.well-known/nexora-verification.txt` sur le site, avec le jeton exact comme contenu.
+Le crawler n'explore que les pages publiques autorisées et vérifiées. La recherche porte uniquement sur les pages explorées par cette instance ; ce n'est pas encore un index mondial comparable à Google. Les modes images et actualités sont affichés mais désactivés.
 
-### DNS
-Créer un enregistrement TXT nommé `_nexora-verification.votredomaine.fr` avec le jeton exact.
+## Important à propos de la disponibilité
 
-Après publication, cliquer sur **Vérifier la propriété**.
-
-## Sitemap et exploration
-
-1. Vérifiez la propriété.
-2. Indiquez l'URL du sitemap, généralement `https://votredomaine.fr/sitemap.xml`.
-3. Cliquez sur **Vérifier le sitemap**.
-4. Cliquez sur **Lancer le crawler**.
-5. Consultez les pages et utilisez « Tester la recherche ».
-
-Le crawler est volontairement limité à 100 pages par exploration, avec une pause entre les requêtes. Il suit les pages HTML du même domaine vérifié et n'indexe pas automatiquement toutes les URL soumises : il doit pouvoir les explorer.
-
-## Limites importantes
-
-- Ce projet est un prototype fonctionnel pour développement local, pas un moteur de recherche mondial comparable à Google.
-- Les données sont conservées dans un fichier JSON local. Pour un service public multi-utilisateur, il faut ajouter authentification, rôles, protections CSRF/rate limiting, une base PostgreSQL, une file de tâches et des journaux.
-- Les règles `robots.txt` sont gérées de façon volontairement simple ; une implémentation de production doit prendre en charge complètement les groupes, jokers et règles `Allow`/`Disallow`.
-- Le crawler bloque les hôtes privés/locales et revalide les redirections. Héberger un crawler public demande une revue de sécurité supplémentaire.
-- Le serveur d'API est sans authentification et doit rester local ou derrière une authentification solide. Ne l'exposez pas directement à Internet.
-- La recherche ne couvre que les pages que cette instance a explorées et indexées.
+Cette configuration maintient le serveur actif sur ce PC tant que Windows est démarré et que la session utilisateur est ouverte. Elle ne transforme pas le PC en hébergement Internet permanent : l'appareil doit rester allumé et connecté. Pour un service public 24/7, hébergez Node.js sur un serveur ou une plateforme adaptée et ajoutez une authentification solide avant d'exposer l'API.

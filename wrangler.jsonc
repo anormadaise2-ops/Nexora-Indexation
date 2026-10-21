@@ -1,0 +1,19 @@
+﻿{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "nexora-indexation",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-10-22",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nexora-indexation-db",
+      "database_id": "aa9d93b8-a35f-496a-a489-63201671fd1d",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
