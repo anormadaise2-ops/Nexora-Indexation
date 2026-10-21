@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /api/
+
+Sitemap: https://nexora-indexation.anormadaise2.workers.dev/sitemap.xml
