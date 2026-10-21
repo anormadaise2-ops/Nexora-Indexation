@@ -1,4 +1,4 @@
-﻿const json = (value, status = 200, headers = {}) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers } });
+const json = (value, status = 200, headers = {}) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", ...headers } });
 const iso = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
 const rows = async (stmt) => (await stmt.all()).results || [];
@@ -57,6 +57,24 @@ async function safeFetch(raw, accept = "text/html,application/xml,text/plain,*/*
   }
   throw new Error("Trop de redirections.");
 }
+async function assetAwareFetch(env, workerOrigin, raw, accept, timeoutMs = 3500) {
+  const u = new URL(raw);
+  if (u.origin === workerOrigin && env.ASSETS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await env.ASSETS.fetch(
+        new Request(u.href, {
+          headers: { "Accept": accept },
+          signal: controller.signal
+        })
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return safeFetch(raw, accept, timeoutMs);
+}
 function decodeEntities(s) {
   return String(s).replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&quot;/gi,'"').replace(/&#39;/gi,"'").replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Math.min(Number(n)||32,0x10ffff)));
 }
@@ -89,7 +107,7 @@ function robotsRules(text) {
 }
 function robotsAllows(url, rules) { const path = new URL(url).pathname + new URL(url).search; return !rules.some(p => p === "/" || path.startsWith(p)); }
 
-async function crawlSite(env, siteId, jobId, requestedSitemap) {
+async function crawlSite(env, siteId, jobId, requestedSitemap, workerOrigin) {
   const DB = env.DB;
   try {
     const site = await first(DB.prepare("SELECT * FROM sites WHERE id = ?").bind(siteId));
@@ -97,13 +115,13 @@ async function crawlSite(env, siteId, jobId, requestedSitemap) {
     const candidates = [];
     let sitemapUrl = requestedSitemap || site.last_submitted_sitemap || site.origin + "/sitemap.xml";
     try { const su = new URL(sitemapUrl, site.origin); if (su.origin === site.origin) candidates.push(su.href); } catch {}
-    const robotResponse = await safeFetch(site.origin + "/robots.txt", "text/plain,*/*;q=0.2", 2000).catch(() => null);
+    const robotResponse = await assetAwareFetch(env, workerOrigin, site.origin + "/robots.txt", "text/plain,*/*;q=0.2", 2000).catch(() => null);
     const robotsText = robotResponse && robotResponse.ok ? (await robotResponse.text()).slice(0,50000) : "";
     const disallow = robotsRules(robotsText);
     let queue = [];
     for (const candidate of candidates) {
       try {
-        const r = await safeFetch(candidate, "application/xml,text/xml,text/plain,*/*;q=0.2", 2500);
+        const r = await assetAwareFetch(env, workerOrigin, candidate, "application/xml,text/xml,text/plain,*/*;q=0.2", 2500);
         if (r.ok) { const xml = (await r.text()).slice(0, 500000); queue.push(...parseSitemap(xml,candidate).filter(u => siteMatches(site.origin,u))); }
       } catch {}
     }
@@ -119,7 +137,7 @@ async function crawlSite(env, siteId, jobId, requestedSitemap) {
         continue;
       }
       try {
-        const r = await safeFetch(u.href,"text/html,application/xhtml+xml,*/*;q=0.2",3000);
+        const r = await assetAwareFetch(env, workerOrigin, u.href,"text/html,application/xhtml+xml,*/*;q=0.2",3000);
         const type = r.headers.get("content-type") || "";
         if (!r.ok) { errors++; await DB.prepare("INSERT INTO pages (id,site_id,url,status,http_status,title,description,text_content,canonical,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(site_id,url) DO UPDATE SET status=excluded.status,http_status=excluded.http_status,error=excluded.error,updated_at=excluded.updated_at")
           .bind(id(),siteId,u.href,"error",r.status,"","","","",`HTTP ${r.status}`,iso(),iso()).run(); continue; }
@@ -185,7 +203,7 @@ export default {
           const b=await bodyJson(request), method=b.method||site.verification_method||"meta";
           if(method==="dns") return json({error:"La vÃ©rification DNS TXT n'est pas encore prise en charge sur Cloudflare. Utilise META ou fichier."},400);
           try {
-            if(method==="meta") { const r=await safeFetch(site.origin+"/","text/html,*/*;q=0.2",3500); if(!r.ok)throw new Error(`La page rÃ©pond HTTP ${r.status}.`); const html=(await r.text()).slice(0,500000); const token=site.verification_token; const re=new RegExp("<meta\\b(?=[^>]*name\\s*=\\s*[\\\"']nexora-site-verification[\\\"'])(?=[^>]*content\\s*=\\s*[\\\"']"+token+"[\\\"'])[^>]*>","i"); if(!re.test(html))throw new Error("Balise META Nexora introuvable."); }
+            if(method==="meta") { const r=await assetAwareFetch(env,new URL(request.url).origin,site.origin+"/","text/html,*/*;q=0.2",3500); if(!r.ok)throw new Error(`La page rÃ©pond HTTP ${r.status}.`); const html=(await r.text()).slice(0,500000); const token=site.verification_token; const re=new RegExp("<meta\\b(?=[^>]*name\\s*=\\s*[\\\"']nexora-site-verification[\\\"'])(?=[^>]*content\\s*=\\s*[\\\"']"+token+"[\\\"'])[^>]*>","i"); if(!re.test(html))throw new Error("Balise META Nexora introuvable."); }
             else if(method==="file") { const r=await safeFetch(site.origin+"/.well-known/nexora-verification.txt","text/plain,*/*;q=0.2",3500); if(!r.ok || !(await r.text()).trim().split(/\r?\n/).includes(site.verification_token))throw new Error("Fichier de vÃ©rification introuvable ou jeton incorrect."); }
             else throw new Error("MÃ©thode de vÃ©rification inconnue.");
             await env.DB.prepare("UPDATE sites SET verified=1,verified_at=?,verification_method=? WHERE id=?").bind(iso(),method,sid).run(); return json({ok:true,verified:true,message:"PropriÃ©tÃ© vÃ©rifiÃ©e."});
@@ -195,7 +213,7 @@ export default {
         if (m && request.method === "POST") {
           const sid=m[1], site=await first(env.DB.prepare("SELECT * FROM sites WHERE id=?").bind(sid)); if(!site||!site.verified)return json({error:"VÃ©rifie dâ€™abord la propriÃ©tÃ© du site."},403);
           const b=await bodyJson(request); let sitemapUrl; try { sitemapUrl=new URL(String(b.url||site.origin+"/sitemap.xml"),site.origin).href; if(!siteMatches(site.origin,sitemapUrl))throw new Error(); publicUrl(sitemapUrl); } catch { return json({error:"Le sitemap doit Ãªtre une URL publique du domaine vÃ©rifiÃ©."},400); }
-          const r=await safeFetch(sitemapUrl,"application/xml,text/xml,text/plain,*/*;q=0.2",3500); if(!r.ok)return json({error:`Le sitemap rÃ©pond HTTP ${r.status}.`},400);
+          const r=await assetAwareFetch(env,new URL(request.url).origin,sitemapUrl,"application/xml,text/xml,text/plain,*/*;q=0.2",3500); if(!r.ok)return json({error:`Le sitemap rÃ©pond HTTP ${r.status}.`},400);
           const xml=(await r.text()).slice(0,500000); const urls=parseSitemap(xml,sitemapUrl).filter(u=>siteMatches(site.origin,u)); if(!urls.length)return json({error:"Sitemap XML invalide ou aucune URL du domaine trouvÃ©e."},400);
           await env.DB.prepare("UPDATE sites SET last_submitted_sitemap=? WHERE id=?").bind(sitemapUrl,sid).run(); return json({ok:true,sitemap:sitemapUrl,discoveredUrls:urls.length,message:`${urls.length} URL dÃ©couvertes. Lance le crawler pour indexer jusquâ€™Ã  3 petites pages par tÃ¢che.`});
         }
@@ -204,7 +222,7 @@ export default {
           const sid=m[1], site=await first(env.DB.prepare("SELECT * FROM sites WHERE id=?").bind(sid)); if(!site||!site.verified)return json({error:"VÃ©rifie dâ€™abord la propriÃ©tÃ© du site."},403);
           const running=await first(env.DB.prepare("SELECT id FROM jobs WHERE site_id=? AND status='running' LIMIT 1").bind(sid)); if(running)return json({error:"Une exploration est dÃ©jÃ  en cours."},409);
           const b=await bodyJson(request), jobId=id(); await env.DB.prepare("INSERT INTO jobs (id,site_id,status,started_at,crawled,errors) VALUES (?,?,'running',?,0,0)").bind(jobId,sid,iso()).run();
-          ctx.waitUntil(crawlSite(env,sid,jobId,String(b.sitemap||site.last_submitted_sitemap||site.origin+"/sitemap.xml")));
+          ctx.waitUntil(crawlSite(env,sid,jobId,String(b.sitemap||site.last_submitted_sitemap||site.origin+"/sitemap.xml"),url.origin));
           return json({ok:true,message:"Exploration lancÃ©e. Cette tÃ¢che explore au maximum 3 petites pages pour respecter les limites gratuites de Workers."},202);
         }
         m = url.pathname.match(/^\/api\/sites\/([^/]+)\/pages$/);
