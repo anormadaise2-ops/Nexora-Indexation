@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Nexora — Nouvel onglet</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: #f3f6ff;
+      --muted: #9aa9c3;
+      --blue: #72b5ff;
+      --line: rgba(255,255,255,.1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #0b1020;
+      color: var(--text);
+      font-family: "Segoe UI", Inter, system-ui, Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-y: auto;
+      background:
+        radial-gradient(ellipse at 50% 0%, #28508b42, transparent 47%),
+        radial-gradient(ellipse at 92% 65%, #774bbd20, transparent 36%),
+        #0b1020;
+    }
+
+    .page {
+      width: min(980px, calc(100% - 42px));
+      margin: 0 auto;
+      padding: 7vh 0 55px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .logo-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: white;
+      font-size: 14px;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: linear-gradient(140deg, #75d6ff, #5272ff 58%, #a169ff);
+      box-shadow: 0 7px 25px #4f7dff38;
+      font-weight: 900;
+      color: white;
+      font-size: 18px;
+    }
+
+    .clock-block {
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    #clock {
+      font-size: 14px;
+      color: #f3f6ff;
+      font-weight: 650;
+    }
+
+    .hero {
+      text-align: center;
+      padding-top: 8vh;
+    }
+
+    .hero-mark {
+      width: 67px;
+      height: 67px;
+      margin: 0 auto 19px;
+      display: grid;
+      place-items: center;
+      border-radius: 22px;
+      font-size: 35px;
+      font-weight: 900;
+      color: white;
+      background: linear-gradient(140deg, #72d4ff, #5169ff 57%, #9568ff);
+      box-shadow: 0 12px 42px #456fff45;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 50px);
+      letter-spacing: -1.7px;
+      font-weight: 780;
+    }
+
+    .subtitle {
+      margin: 13px 0 29px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .search-form {
+      width: min(690px, 100%);
+      height: 60px;
+      margin: 0 auto;
+      padding: 6px 8px 6px 19px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-radius: 17px;
+      border: 1px solid #293953;
+      background: #121b2d;
+      box-shadow: 0 13px 40px #0003;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .search-form:focus-within {
+      border-color: #659eff;
+      box-shadow: 0 0 0 4px #5494ff18, 0 14px 40px #0003;
+    }
+
+    .search-symbol {
+      color: #819bc2;
+      font-size: 20px;
+    }
+
+    #query {
+      min-width: 0;
+      flex: 1;
+      height: 42px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: white;
+      font-size: 14px;
+      user-select: text;
+    }
+
+    #query::placeholder { color: #7687a3; }
+
+    .search-button {
+      height: 44px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, #4c91ff, #5467ef);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .search-button:hover { filter: brightness(1.1); }
+
+    .engine-note {
+      margin: 13px 0 0;
+      font-size: 11px;
+      color: #7f90ad;
+    }
+
+    .section-heading {
+      margin: 43px 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 650;
+      color: #dce5f5;
+    }
+
+    .section-heading span:last-child {
+      font-weight: 400;
+      color: #7e8da6;
+      font-size: 11px;
+    }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tile {
+      min-height: 112px;
+      padding: 15px 7px 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #131d30b8;
+      color: #e3ebfa;
+      font-size: 11px;
+      transition: transform .15s, border-color .15s, background .15s;
+    }
+
+    .tile:hover {
+      transform: translateY(-3px);
+      border-color: #4e75ad;
+      background: #1a2a45;
+    }
+
+    .tile-icon {
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      font-size: 20px;
+      color: white;
+      background: linear-gradient(145deg, #263d60, #17243a);
+      border: 1px solid #ffffff12;
+    }
+
+    .info-card {
+      margin-top: 26px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(110deg, #152139, #11192a);
+    }
+
+    .info-copy strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #eaf1ff;
+    }
+
+    .info-copy span {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 11px;
+    }
+
+    .status-pill {
+      flex: 0 0 auto;
+      padding: 8px 11px;
+      border: 1px solid #245c4b;
+      border-radius: 20px;
+      color: #8ce3bf;
+      background: #123e3333;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #63738d;
+      font-size: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hero { padding-top: 5vh; }
+      .page { padding-top: 30px; }
+      .info-card { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 400px) {
+      .search-button { padding: 0 11px; }
+      .search-form { padding-left: 12px; gap: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="topline">
+      <div class="logo-line">
+        <div class="logo">N</div>
+        <span>NEXORA BROWSER</span>
+      </div>
+      <div class="clock-block">
+        <div id="clock">Bienvenue</div>
+        <div id="date"></div>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-mark">N</div>
+      <h1>Le web, à votre façon.</h1>
+      <p class="subtitle">Bienvenue sur votre nouvel espace de navigation.</p>
+
+      <form class="search-form" id="searchForm">
+        <span class="search-symbol">⌕</span>
+        <input
+          id="query"
+          type="text"
+          placeholder="Que souhaitez-vous rechercher ?"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Rechercher sur le Web"
+          autofocus
+        >
+        <button class="search-button" type="submit">Rechercher ↗</button>
+      </form>
+
+      <p class="engine-note" id="engineNote">Recherche propulsée par Brave Search</p>
+    </section>
+
+    <div class="section-heading">
+      <span>Raccourcis</span>
+      <span>Vos sites préférés, à portée de clic</span>
+    </div>
+
+    <section class="tiles">
+      <a class="tile" href="https://www.youtube.com">
+        <span class="tile-icon">▶</span><span>YouTube</span>
+      </a>
+      <a class="tile" href="https://www.twitch.tv">
+        <span class="tile-icon">◉</span><span>Twitch</span>
+      </a>
+      <a class="tile" href="https://github.com">
+        <span class="tile-icon">⌘</span><span>GitHub</span>
+      </a>
+      <a class="tile" href="https://www.roblox.com">
+        <span class="tile-icon">◆</span><span>Roblox</span>
+      </a>
+      <a class="tile" href="https://mail.google.com">
+        <span class="tile-icon">✉</span><span>Gmail</span>
+      </a>
+      <a class="tile" href="https://www.wikipedia.org">
+        <span class="tile-icon">▤</span><span>Wikipédia</span>
+      </a>
+    </section>
+
+    <section class="info-card">
+      <div class="info-copy">
+        <strong>Votre navigation, réunie au même endroit.</strong>
+        <span>Utilisez la barre d'adresse en haut pour ouvrir un site ou effectuer une recherche.<br>
+        Vos favoris et votre historique Nexora sont conservés localement sur cet appareil.</span>
+      </div>
+      <div class="status-pill">● Chromium actif</div>
+    </section>
+
+    <footer>Nexora Browser · Une expérience web pensée pour vous</footer>
+  </main>
+
+  <script>
+    const engines = {
+      Brave: "https://search.brave.com/search?q=",
+      Google: "https://www.google.com/search?q=",
+      Bing: "https://www.bing.com/search?q=",
+      DuckDuckGo: "https://duckduckgo.com/?q=",
+      Ecosia: "https://www.ecosia.org/search?q=",
+      Qwant: "https://www.qwant.com/?q=",
+      Yahoo: "https://search.yahoo.com/search?p=",
+      Startpage: "https://www.startpage.com/sp/search?query="
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const engine = engines[params.get("engine")] ? params.get("engine") : "Brave";
+
+    document.getElementById("engineNote").textContent =
+      "Recherche propulsée par " + (engine === "DuckDuckGo" ? "DuckDuckGo" : engine === "Brave" ? "Brave Search" : engine);
+
+    document.getElementById("searchForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const query = document.getElementById("query").value.trim();
+
+      if (query) {
+        window.location.href = engines[engine] + encodeURIComponent(query);
+      }
+    });
+
+    function updateClock() {
+      const now = new Date();
+
+      document.getElementById("clock").textContent =
+        now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+      document.getElementById("date").textContent =
+        now.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long"
+        });
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>

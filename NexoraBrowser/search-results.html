@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Résultats — Nexora</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#edf3ff;font-family:"Segoe UI",Arial,sans-serif}
+main{width:min(900px,calc(100% - 32px));margin:34px auto}
+.brand{font-size:14px;font-weight:800}
+h1{margin-top:27px;font-size:28px}
+#query{color:#9bacc6;font-size:12px;overflow-wrap:anywhere}
+.note,.result,.empty{padding:16px;margin:13px 0;border-radius:13px;border:1px solid #2a3b55;background:#121d30}
+.note{color:#efcf9d;border-color:#694e31;background:#2c2118;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.title{font-size:16px;color:#9bcaff;font-weight:700;overflow-wrap:anywhere}
+.url{font-size:11px;color:#74d1a7;margin-top:7px;overflow-wrap:anywhere}
+.snippet{font-size:12px;color:#b1c0d7;line-height:1.7;margin-top:9px}
+.empty{color:#9aacc7;font-size:12px;line-height:1.7}
+</style>
+</head>
+<body>
+<main>
+<div class="brand">✦ NEXORA INDEXATION</div>
+<h1>Résultats de recherche</h1>
+<div id="query"></div>
+<div id="notice"></div>
+<div id="count" style="color:#8295b2;font-size:11px;margin-top:18px"></div>
+<section id="results"></section>
+</main>
+<script>
+"use strict";
+const params=new URLSearchParams(location.search);
+const query=params.get("q")||"";
+document.getElementById("query").textContent="Recherche : "+query;
+let results=[];
+try{
+ const raw=Uint8Array.from(atob(params.get("data")||""),c=>c.charCodeAt(0));
+ results=JSON.parse(new TextDecoder().decode(raw));
+ if(!Array.isArray(results))results=[];
+}catch(_){results=[];}
+const error=params.get("error")||"";
+if(error){
+ const note=document.createElement("div");note.className="note";note.textContent=error;
+ document.getElementById("notice").appendChild(note);
+}
+document.getElementById("count").textContent=results.length+" résultat(s)";
+const container=document.getElementById("results");
+if(!results.length){
+ const empty=document.createElement("div");empty.className="empty";
+ empty.textContent=error
+  ?"Le service Nexora n'a pas fourni de résultats. Ouvre le tableau de bord Indexation pour vérifier le serveur."
+  :"Aucune page correspondante dans l'index Nexora. Indexe d'abord ton site ou son sitemap.";
+ container.appendChild(empty);
+}
+for(const item of results){
+ try{
+  const url=new URL(item.url);
+  if(!["http:","https:"].includes(url.protocol))continue;
+  const card=document.createElement("article");card.className="result";
+  const title=document.createElement("div");title.className="title";title.textContent=item.title||url.hostname;
+  const link=document.createElement("div");link.className="url";link.textContent=url.href;
+  const snippet=document.createElement("div");snippet.className="snippet";snippet.textContent=item.snippet||"Page présente dans l'index Nexora.";
+  card.append(title,link,snippet);container.appendChild(card);
+ }catch(_){}
+}
+</script>
+</body>
+</html>

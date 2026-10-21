@@ -1,0 +1,13 @@
+{
+  "name": "nexora-indexation",
+  "version": "1.0.0",
+  "description": "Moteur d'indexation web Nexora : propriétés, vérification, sitemap, crawler et recherche",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

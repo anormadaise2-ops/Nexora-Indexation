@@ -1,0 +1,55 @@
+{
+    "name":  "nexora-browser",
+    "version":  "2.0.0",
+    "description":  "Nexora Browser - navigateur Chromium de bureau",
+    "author":  "Nexora",
+    "main":  "main.js",
+    "license":  "UNLICENSED",
+    "scripts":  {
+                    "start":  "electron .",
+                    "build":  "electron-builder --win nsis --x64"
+                },
+    "devDependencies":  {
+                            "electron":  "45.0.0",
+                            "electron-builder":  "^26.0.12"
+                        },
+    "allowScripts":  {
+                         "electron@45.0.0":  true
+                     },
+    "build":  {
+                  "appId":  "com.nexora.browser",
+                  "productName":  "Nexora Browser",
+                  "asar":  true,
+                  "directories":  {
+                                      "output":  "dist"
+                                  },
+                  "files":  [
+                                "main.js",
+                                "preload.js",
+                                "index.html",
+                                "home.html",
+                                "search-results.html",
+                                "downloads.html",
+                                "package.json",
+                                "web/**/*"
+                            ],
+                  "win":  {
+                              "target":  [
+                                             {
+                                                 "target":  "nsis",
+                                                 "arch":  [
+                                                              "x64"
+                                                          ]
+                                             }
+                                         ],
+                              "artifactName":  "NexoraBrowser-Setup-${version}.${ext}"
+                          },
+                  "nsis":  {
+                               "oneClick":  false,
+                               "allowToChangeInstallationDirectory":  true,
+                               "createDesktopShortcut":  true,
+                               "createStartMenuShortcut":  true,
+                               "shortcutName":  "Nexora Browser"
+                           }
+              }
+}

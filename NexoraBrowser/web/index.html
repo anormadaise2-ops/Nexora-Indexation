@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Nexora Indexation</title>
+<style>
+:root{color-scheme:dark;--bg:#09101d;--panel:#111b2d;--panel2:#16233a;--line:#293b56;--text:#edf3ff;--muted:#9aacc7;--blue:#77b8ff;--green:#6de0b0;--red:#fb9eac}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 5% 0%,#31568d40,transparent 35%),radial-gradient(ellipse at 95% 15%,#6a3ead25,transparent 32%),var(--bg);font-family:"Segoe UI",Inter,Arial,sans-serif;color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:1px solid #334660;border-radius:10px;padding:10px 13px;background:#1a2941;color:var(--text);font-size:12px;transition:.15s}
+button:hover{background:#253953;border-color:#5a80b6}
+button.primary{background:linear-gradient(135deg,#377fe5,#5968ee);border-color:#6591f2;color:white;font-weight:750}
+button.danger{background:#421f2a;border-color:#723544;color:#ffbac4}
+button.good{background:#13382e;border-color:#2d7057;color:#a4f1d0}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,textarea,select{width:100%;border:1px solid #32445e;border-radius:10px;background:#0b1423;color:#edf3ff;padding:11px 12px;font-size:12px;outline:0;user-select:text}
+input:focus,textarea:focus,select:focus{border-color:#70b2ff;box-shadow:0 0 0 3px #4d94ff1a}
+label{display:block;margin:0 0 7px;font-size:11px;font-weight:700;color:#b8c6dc}
+small,.muted{color:var(--muted);font-size:11px;line-height:1.65}
+header{min-height:72px;position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:13px 25px;border-bottom:1px solid #ffffff10;background:#0a111ff0;backdrop-filter:blur(16px)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:850;font-size:15px;letter-spacing:.5px}
+.logo{width:39px;height:39px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(140deg,#72d4ff,#526bff 58%,#a46cff);font-size:22px;box-shadow:0 6px 25px #527aff39}
+.brand small{display:block;letter-spacing:1.8px;font-size:9px;margin-top:3px;color:#92a6c5}
+.head-status{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:99px;padding:9px 12px;font-size:10px;color:#b3c5de;background:#121d30}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#899ab4}
+.dot.on{background:#5bdfaa;box-shadow:0 0 10px #5bdfaa7a}
+main{width:min(1360px,calc(100% - 36px));margin:28px auto 55px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;margin-bottom:24px}
+.eyebrow{color:#8bc4ff;font-size:10px;letter-spacing:1.8px;font-weight:850;text-transform:uppercase}
+h1{font-size:clamp(28px,4vw,40px);letter-spacing:-1.2px;margin:9px 0}
+h2{font-size:17px;letter-spacing:-.3px;margin:0 0 10px}
+h3{font-size:13px;margin:0 0 7px}
+.intro{max-width:760px;color:var(--muted);font-size:13px;line-height:1.7;margin:0}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:19px}
+.stat,.card{background:linear-gradient(140deg,#142139,#101827);border:1px solid var(--line);border-radius:15px;overflow:hidden}
+.stat{padding:17px 18px}
+.stat-head{display:flex;align-items:center;justify-content:space-between;color:#a6b9d4;font-size:11px}
+.stat-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#233652;font-size:15px;color:#b8d7ff}
+.stat-value{font-size:25px;font-weight:850;letter-spacing:-.7px;margin-top:14px}
+.stat-note{font-size:10px;color:#8496b1;margin-top:5px;overflow-wrap:anywhere}
+.nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:17px}
+.nav button{font-size:11px;padding:10px 13px;background:#131f33;color:#aebed6}
+.nav button.active{background:#294777;border-color:#5e90d4;color:white}
+.card{margin-bottom:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px;border-bottom:1px solid #ffffff0e}
+.card-head p{margin:5px 0 0;font-size:10px;color:var(--muted);line-height:1.6}
+.card-body{padding:19px}
+.columns{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:17px;align-items:start}
+.stack{display:grid;gap:16px}
+.field{margin-bottom:15px}
+.row{display:flex;align-items:center;gap:9px}
+.row>*{min-width:0}
+.row input{flex:1}
+.note{border:1px solid #344760;border-radius:10px;background:#152238;padding:12px 13px;color:#adbed7;font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+.note.warn{border-color:#6b4c30;background:#302417;color:#f1d2a0}
+.note.ok{border-color:#285b49;background:#133027;color:#a4eacb}
+.note.error{border-color:#753a49;background:#381e29;color:#ffbec7}
+.msg{display:none;margin-top:13px;padding:11px 12px;border-radius:9px;background:#182840;border:1px solid #344a68;font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+.msg.show{display:block}
+.msg.good{background:#123226;border-color:#2b624d;color:#b0f1d3}
+.msg.bad{background:#3c202b;border-color:#79404d;color:#ffc0c9}
+.auth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.auth-card{padding:19px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#15233a,#101827)}
+.auth-card form{display:grid;gap:12px}
+.auth-card .field{margin:0}
+.details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:16px}
+details{border:1px solid var(--line);border-radius:12px;background:#111b2d;padding:13px}
+summary{cursor:pointer;font-weight:700;font-size:12px}
+details form{margin-top:15px;display:grid;gap:12px}
+.panel{display:none}
+.panel.active{display:block}
+.hidden{display:none!important}
+.results,.job-list,.page-list,.user-list,.logs{display:grid;gap:10px;margin-top:14px}
+.result,.job,.page-item,.user-item{border:1px solid #2a3b55;border-radius:11px;background:#111c2e;padding:14px}
+.result-title{font-weight:750;color:#b9d8ff;font-size:12px;overflow-wrap:anywhere}
+.result-url{font-size:10px;color:#73d0a8;margin-top:6px;overflow-wrap:anywhere}
+.result-snippet{font-size:11px;color:#a5b8d2;line-height:1.7;margin-top:8px;overflow-wrap:anywhere}
+.actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;margin-top:11px}
+.actions button{padding:7px 10px;font-size:10px}
+.badge{display:inline-flex;align-items:center;gap:5px;border:1px solid #344863;border-radius:99px;padding:5px 8px;background:#1b2a41;color:#b8cbe5;font-size:9px;white-space:nowrap}
+.badge.good{background:#133528;border-color:#2b614a;color:#9be8c5}
+.badge.red{background:#3a202a;border-color:#73404e;color:#ffb9c4}
+.progress{height:7px;background:#28364c;border-radius:20px;overflow:hidden;margin-top:10px}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#407ff0,#73c6ff);transition:width .25s}
+.progress span.running{background:linear-gradient(90deg,#527cff,#7bc3ff);background-size:200% 100%;animation:flow 1.2s linear infinite}
+@keyframes flow{to{background-position:-200% 0}}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{padding:11px 9px;border-bottom:1px solid #ffffff0d;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+th{color:#9cafca;font-weight:750}
+.table-wrap{width:100%;overflow:auto}
+.user-name{font-weight:750;font-size:12px}
+.log-item{padding:11px 12px;border:1px solid #273852;border-radius:9px;background:#101a2a;font:10px/1.7 Consolas,monospace;color:#a9bdd7;overflow-wrap:anywhere}
+.log-item strong{color:#80baff}
+.empty{padding:23px 14px;text-align:center;color:#899bb7;border:1px dashed #3a4d68;border-radius:11px;font-size:11px;line-height:1.8}
+.foot{padding:14px 19px;border-top:1px solid #ffffff0c;color:#8093af;font-size:10px;line-height:1.7;overflow-wrap:anywhere}
+footer{text-align:center;color:#5e7190;font-size:10px;margin:28px 0}
+@media(max-width:850px){.columns{grid-template-columns:1fr}.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{align-items:flex-start;flex-direction:column}}
+@media(max-width:620px){header{padding:12px 14px}.head-status{display:none}main{width:calc(100% - 22px);margin-top:19px}.auth-grid,.details-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.card-head,.card-body{padding:14px}.row{flex-direction:column;align-items:stretch}.row button{min-height:39px}.nav button{flex:1}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">N</div><div>NEXORA <small>WEB & INDEXATION</small></div></div>
+  <div class="head-status"><span class="dot" id="statusDot"></span><span id="statusLabel">Vérification du serveur…</span></div>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Nexora Web Console</div>
+      <h1>Ton espace Web.</h1>
+      <p class="intro">Comptes sécurisés, indexation des sites, sitemaps XML, recherche dans les pages indexées et administration.</p>
+    </div>
+    <div class="row">
+      <button id="refreshAll">Actualiser</button>
+      <button id="logout" class="hidden">Déconnexion</button>
+    </div>
+  </section>
+
+  <section id="authScreen">
+    <article class="auth-card" style="margin-bottom:16px">
+        <h2>Continuer en invité</h2>
+        <p class="muted">Accède à Nexora sans créer de compte. La session invité expire après quatre heures et dispose de limites d'utilisation.</p>
+        <button class="primary" type="button" id="guestLogin">Continuer sans compte</button>
+        <div id="guestMsg" class="msg"></div>
+      </article>
+<div class="auth-grid">
+      <article class="auth-card">
+        <h2>Connexion</h2>
+        <p class="muted">Accède à ton compte Nexora.</p>
+        <form id="loginForm">
+          <div class="field"><label for="loginUser">Nom d'utilisateur</label><input id="loginUser" autocomplete="username" required></div>
+          <div class="field"><label for="loginPass">Mot de passe</label><input id="loginPass" type="password" autocomplete="current-password" required></div>
+          <button class="primary" type="submit">Se connecter</button>
+        </form>
+        <div id="loginMsg" class="msg"></div>
+      </article>
+
+      <article class="auth-card">
+        <h2>Créer un compte</h2>
+        <p class="muted">Un code sera envoyé en message privé par le bot Discord.</p>
+        <form id="registerForm">
+          <div class="field"><label for="regUser">Nom d'utilisateur</label><input id="regUser" minlength="3" maxlength="24" autocomplete="username" required></div>
+          <div class="field"><label for="regPass">Mot de passe</label><input id="regPass" type="password" minlength="10" maxlength="128" autocomplete="new-password" required></div>
+          <div class="field"><label for="regDiscord">Identifiant Discord numérique</label><input id="regDiscord" inputmode="numeric" placeholder="123456789012345678" required></div>
+          <button class="primary" type="submit">Envoyer mon code</button>
+        </form>
+        <div id="registerMsg" class="msg"></div>
+      </article>
+    </div>
+
+    <div class="details-grid">
+      <details open>
+        <summary>Vérifier mon code Discord</summary>
+        <form id="verifyForm">
+          <div class="field"><label for="verifyUser">Nom d'utilisateur</label><input id="verifyUser" required></div>
+          <div class="field"><label for="verifyCode">Code à 6 chiffres</label><input id="verifyCode" inputmode="numeric" minlength="6" maxlength="6" required></div>
+          <button class="primary" type="submit">Vérifier le code</button>
+        </form>
+        <div id="verifyMsg" class="msg"></div>
+      </details>
+
+      <details>
+        <summary>Mot de passe oublié</summary>
+        <form id="forgotForm">
+          <div class="field"><label for="forgotUser">Nom d'utilisateur</label><input id="forgotUser" required></div>
+          <button class="primary" type="submit">Envoyer un code Discord</button>
+        </form>
+        <div id="forgotMsg" class="msg"></div>
+        <form id="resetForm">
+          <div class="field"><label for="resetUser">Nom d'utilisateur</label><input id="resetUser" required></div>
+          <div class="field"><label for="resetCode">Code reçu</label><input id="resetCode" inputmode="numeric" minlength="6" maxlength="6" required></div>
+          <div class="field"><label for="resetPass">Nouveau mot de passe</label><input id="resetPass" type="password" minlength="10" maxlength="128" autocomplete="new-password" required></div>
+          <button type="submit">Réinitialiser le mot de passe</button>
+        </form>
+        <div id="resetMsg" class="msg"></div>
+      </details>
+    </div>
+
+    <article id="bootstrapCard" class="auth-card hidden" style="margin-top:16px">
+      <h2>Initialisation de l'administration</h2>
+      <p class="muted">Utilise la clé initiale présente dans le fichier de configuration local. Cette opération n'est disponible que tant qu'aucun administrateur n'existe.</p>
+      <div id="configInfo" class="note warn"></div>
+      <form id="bootstrapForm" style="margin-top:15px">
+        <div class="field"><label for="setupKey">Clé initiale</label><input id="setupKey" type="password" required></div>
+        <div class="field"><label for="adminUser">Nom d'utilisateur administrateur</label><input id="adminUser" minlength="3" maxlength="24" required></div>
+        <div class="field"><label for="adminPass">Mot de passe administrateur</label><input id="adminPass" type="password" minlength="10" maxlength="128" required></div>
+        <div class="field"><label for="adminDiscord">Identifiant Discord numérique</label><input id="adminDiscord" inputmode="numeric" required></div>
+        <button class="primary" type="submit">Créer l'administrateur initial</button>
+      </form>
+      <div id="bootstrapMsg" class="msg"></div>
+    </article>
+
+    <div id="discordHint" class="note warn" style="margin-top:17px"></div>
+  </section>
+
+  <section id="appScreen" class="hidden">
+    <div class="grid">
+      <article class="stat"><div class="stat-head"><span>Compte connecté</span><span class="stat-icon">●</span></div><div class="stat-value" id="statUser">—</div><div class="stat-note" id="statRole">—</div></article>
+      <article class="stat"><div class="stat-head"><span>Pages indexées</span><span class="stat-icon">⌕</span></div><div class="stat-value" id="statPages">—</div><div class="stat-note">Pages enregistrées par Nexora</div></article>
+      <article class="stat"><div class="stat-head"><span>Tâches en cours</span><span class="stat-icon">↻</span></div><div class="stat-value" id="statJobs">—</div><div class="stat-note">URL et sitemaps en traitement</div></article>
+    </div>
+
+    <nav class="nav" id="mainNav">
+      <button class="active" data-tab="overview">Vue d'ensemble</button>
+      <button data-tab="index">Indexer une URL</button>
+      <button data-tab="sitemap">Sitemaps XML</button>
+      <button data-tab="search">Recherche</button>
+      <button data-tab="pages">Pages indexées</button>
+      <button data-tab="jobs">Tâches</button>
+      <button data-tab="account">Mon compte</button>
+      <button data-tab="admin" id="adminNav" class="hidden">Administration</button>
+    </nav>
+
+    <section class="panel active" data-panel="overview">
+      <div class="columns">
+        <div class="card">
+          <div class="card-head"><div><h3>Bienvenue sur Nexora Indexation</h3><p>La console de gestion de tes sites et de tes comptes.</p></div><span class="badge good">SESSION ACTIVE</span></div>
+          <div class="card-body">
+            <p class="muted">Soumets l'adresse d'un site, découvre son sitemap XML, lance une tâche d'indexation et recherche les pages enregistrées.</p>
+            <div class="actions" style="justify-content:flex-start">
+              <button class="primary" data-goto="index">Indexer une page</button>
+              <button data-goto="sitemap">Importer un sitemap</button>
+              <button data-goto="search">Rechercher</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>État du service</h3><p>Serveur local et configuration du bot.</p></div></div>
+          <div class="card-body"><div id="serviceInfo" class="note">Chargement…</div><div id="configInfoApp" class="note" style="margin-top:10px"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Dernières tâches</h3><p>Progression des indexations récentes.</p></div><button data-goto="jobs">Toutes les tâches</button></div>
+        <div class="card-body"><div id="overviewJobs" class="job-list"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="index">
+      <div class="card">
+        <div class="card-head"><div><h3>Indexer une URL</h3><p>Nexora explore une page publique et découvre les liens du même domaine.</p></div><span class="badge">HTTP / HTTPS</span></div>
+        <div class="card-body">
+          <form id="indexForm">
+            <div class="field"><label for="indexURL">Adresse du site ou de la page</label><input id="indexURL" type="url" placeholder="https://exemple.fr/" required></div>
+            <button class="primary" type="submit">Lancer l'indexation</button>
+          </form>
+          <div class="note" style="margin-top:14px">Nexora respecte les règles Disallow basiques du fichier robots.txt, refuse les adresses IP privées et limite chaque tâche à 250 pages.</div>
+          <div id="indexMsg" class="msg"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="sitemap">
+      <div class="card">
+        <div class="card-head"><div><h3>Importer un sitemap XML</h3><p>Soumets un sitemap ou un index de sitemaps pour découvrir les pages d'un site.</p></div><span class="badge">SITEMAP XML</span></div>
+        <div class="card-body">
+          <form id="sitemapForm">
+            <div class="field"><label for="sitemapURL">Adresse du sitemap</label><input id="sitemapURL" type="url" placeholder="https://exemple.fr/sitemap.xml" required></div>
+            <button class="primary" type="submit">Analyser et indexer les pages</button>
+          </form>
+          <div id="sitemapMsg" class="msg"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div><h3>Comment fonctionne l'import</h3></div></div>
+        <div class="card-body">
+          <p class="muted">Nexora lit les balises &lt;loc&gt;, prend en charge les index de sitemaps imbriqués et ajoute les URL publiques au parcours de l'indexeur. Le traitement reste limité au domaine d'origine afin d'éviter de parcourir involontairement des sites tiers.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="search">
+      <div class="card">
+        <div class="card-head"><div><h3>Recherche Nexora</h3><p>Recherche dans le texte, les titres et les descriptions indexés.</p></div></div>
+        <div class="card-body">
+          <form id="searchForm">
+            <div class="row"><input id="searchInput" placeholder="Exemple : guide, documentation, nom du site…" required><button class="primary" type="submit">Rechercher</button></div>
+          </form>
+          <div id="searchMsg" class="msg"></div>
+          <div id="searchResults" class="results"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="pages">
+      <div class="card">
+        <div class="card-head"><div><h3>Pages indexées</h3><p>Contenu disponible dans la base de recherche Nexora.</p></div><button id="refreshPages">Actualiser</button></div>
+        <div class="card-body"><div id="indexedPages" class="page-list"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="jobs">
+      <div class="card">
+        <div class="card-head"><div><h3>File d'indexation</h3><p>Progression et erreurs des tâches traitées par Nexora.</p></div><button id="refreshJobs">Actualiser</button></div>
+        <div class="card-body"><div id="jobsList" class="job-list"></div></div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="account">
+      <div class="card">
+        <div class="card-head"><div><h3>Mon compte</h3><p>Informations associées à ta session.</p></div><span class="badge good" id="accountRole">—</span></div>
+        <div class="card-body">
+          <div id="accountInfo" class="note"></div>
+          <p class="muted">Les changements de mot de passe passent par la fonction « Mot de passe oublié » et un code envoyé au Discord associé.</p>
+          <button id="accountLogout">Se déconnecter</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" data-panel="admin" id="adminPanel">
+      <div class="columns">
+        <div class="card">
+          <div class="card-head"><div><h3>Gestion des utilisateurs</h3><p>Consulte les comptes et suspends ou réactives leur accès.</p></div><button id="refreshUsers">Actualiser</button></div>
+          <div class="card-body"><div id="adminUsers" class="user-list"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>Journal d'administration</h3><p>Événements de sécurité et actions récentes.</p></div><button id="refreshLogs">Actualiser</button></div>
+          <div class="card-body"><div id="adminLogs" class="logs"></div><div id="logPath" class="note" style="margin-top:13px"></div></div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <footer>Nexora Browser · Nexora Indexation · Comptes, sitemaps et administration</footer>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let me = null;
+let setup = null;
+let refreshTimer = null;
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || data.message || "La requête a échoué.");
+  }
+
+  return data;
+}
+
+function message(id, text, type = "") {
+  const element = $(id);
+  element.textContent = text || "";
+  element.className = "msg" + (text ? " show" : "") + (type ? " " + type : "");
+}
+
+function safeURL(value) {
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    return url.href;
+  } catch (_) {
+    return null;
+  }
+}
+
+function goTab(name) {
+  document.querySelectorAll("[data-panel]").forEach(panel => {
+    panel.classList.toggle("active", panel.dataset.panel === name);
+  });
+
+  document.querySelectorAll("[data-tab]").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === name);
+  });
+
+  if (name === "pages") loadPages();
+  if (name === "jobs") loadJobs();
+  if (name === "admin") loadAdmin();
+}
+
+function showApp(user) {
+  me = user;
+  $("authScreen").classList.add("hidden");
+  $("appScreen").classList.remove("hidden");
+  $("logout").classList.remove("hidden");
+  $("statUser").textContent = user.username;
+  $("statRole").textContent = user.role === "admin" ? "Administrateur" : "Utilisateur";
+  $("adminNav").classList.toggle("hidden", user.role !== "admin");
+  $("accountRole").textContent = user.role.toUpperCase();
+  $("accountInfo").textContent =
+    "Nom : " + user.username + "\n" +
+    "Rôle : " + user.role + "\n" +
+    "Identifiant Discord : " + (user.discordId || "non renseigné") + "\n" +
+    "Compte créé : " + new Date(user.createdAt).toLocaleString("fr-FR");
+
+  goTab("overview");
+  refreshAll();
+}
+
+function showAuth() {
+  me = null;
+  $("authScreen").classList.remove("hidden");
+  $("appScreen").classList.add("hidden");
+  $("logout").classList.add("hidden");
+  clearInterval(refreshTimer);
+}
+
+function jobCard(job) {
+  const card = document.createElement("article");
+  card.className = "job";
+
+  const heading = document.createElement("div");
+  heading.className = "row";
+
+  const title = document.createElement("strong");
+  title.textContent = job.type === "sitemap" ? "Sitemap XML" : "Indexation URL";
+  title.style.fontSize = "12px";
+
+  const badge = document.createElement("span");
+  badge.className = "badge " + (
+    job.status === "completed" ? "good" :
+    job.status === "failed" ? "red" : ""
+  );
+  badge.textContent = job.status;
+
+  heading.append(title, badge);
+
+  const target = document.createElement("div");
+  target.className = "result-url";
+  target.textContent = job.input || "";
+
+  const progress = document.createElement("div");
+  progress.className = "progress";
+
+  const fill = document.createElement("span");
+  const pct = job.status === "completed" ? 100 :
+    (job.total > 0 ? Math.min(98, Math.floor(job.done / job.total * 100)) : 0);
+
+  fill.style.width = pct + "%";
+  if (job.status === "running" || job.status === "queued") fill.classList.add("running");
+  progress.appendChild(fill);
+
+  const note = document.createElement("div");
+  note.className = "result-snippet";
+  note.textContent = (job.message || "") +
+    " · " + (job.done || 0) + " page(s) indexée(s)" +
+    " · " + (job.errors || 0) + " erreur(s)";
+
+  card.append(heading, target, progress, note);
+
+  return card;
+}
+
+async function loadJobs() {
+  try {
+    const data = await api("/api/jobs");
+    const jobs = data.jobs || [];
+
+    $("statJobs").textContent = String(
+      jobs.filter(job => ["queued", "running"].includes(job.status)).length
+    );
+
+    const containers = [$("jobsList"), $("overviewJobs")];
+
+    for (const container of containers) {
+      container.replaceChildren();
+
+      const selected = container.id === "overviewJobs" ? jobs.slice(0, 4) : jobs;
+
+      if (!selected.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "Aucune tâche pour le moment.";
+        container.appendChild(empty);
+        continue;
+      }
+
+      selected.forEach(job => container.appendChild(jobCard(job)));
+    }
+  } catch (error) {
+    message("indexMsg", error.message, "bad");
+  }
+}
+
+async function loadPages() {
+  try {
+    const data = await api("/api/indexed");
+    const pages = data.pages || [];
+
+    $("statPages").textContent = String(data.count ?? pages.length);
+
+    const container = $("indexedPages");
+    container.replaceChildren();
+
+    if (!pages.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Aucune page indexée. Soumets une URL ou un sitemap.";
+      container.appendChild(empty);
+      return;
+    }
+
+    for (const page of pages.slice(0, 500)) {
+      const item = document.createElement("article");
+      item.className = "page-item";
+
+      const title = document.createElement("div");
+      title.className = "result-title";
+      title.textContent = page.title || page.url;
+
+      const url = document.createElement("div");
+      url.className = "result-url";
+      url.textContent = page.url;
+
+      const info = document.createElement("div");
+      info.className = "result-snippet";
+      info.textContent =
+        (page.snippet || "") + " · Indexée le " +
+        new Date(page.updatedAt || page.indexedAt).toLocaleString("fr-FR");
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const open = document.createElement("button");
+      open.textContent = "Ouvrir dans Nexora";
+      open.addEventListener("click", () => window.nexora.indexerOpenURL(page.url));
+
+      actions.appendChild(open);
+      item.append(title, url, info, actions);
+      container.appendChild(item);
+    }
+  } catch (error) {
+    const container = $("indexedPages");
+    container.replaceChildren();
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = error.message;
+    container.appendChild(empty);
+  }
+}
+
+async function loadSearch(query) {
+  const data = await api("/api/search?q=" + encodeURIComponent(query));
+  const results = data.results || [];
+  $("statPages").textContent = String(data.count || 0);
+
+  const container = $("searchResults");
+  container.replaceChildren();
+
+  message(
+    "searchMsg",
+    (data.message || "Recherche terminée.") +
+      " · " + results.length + " résultat(s)",
+    results.length ? "good" : ""
+  );
+
+  if (!results.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent =
+      "Aucun résultat correspondant dans l'index Nexora. Vérifie que le site ou son sitemap a été indexé.";
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const item of results) {
+    const url = safeURL(item.url);
+    if (!url) continue;
+
+    const card = document.createElement("article");
+    card.className = "result";
+
+    const title = document.createElement("div");
+    title.className = "result-title";
+    title.textContent = item.title || url;
+
+    const link = document.createElement("div");
+    link.className = "result-url";
+    link.textContent = url;
+
+    const snippet = document.createElement("div");
+    snippet.className = "result-snippet";
+    snippet.textContent = item.snippet || "";
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const open = document.createElement("button");
+    open.textContent = "Ouvrir dans Nexora";
+    open.addEventListener("click", () => window.nexora.indexerOpenURL(url));
+
+    actions.appendChild(open);
+    card.append(title, link, snippet, actions);
+    container.appendChild(card);
+  }
+}
+
+async function refreshSetup() {
+  setup = await api("/api/setup");
+
+  $("statusDot").classList.toggle("on", true);
+  $("statusLabel").textContent = "Service local actif";
+
+  $("bootstrapCard").classList.toggle("hidden", !setup.bootstrapNeeded);
+
+  $("configInfo").textContent =
+    "Fichier de configuration : " + setup.configPath +
+    ". Ouvre-le dans le Bloc-notes pour renseigner le jeton de ton bot Discord.";
+
+  $("discordHint").textContent = setup.discordConfigured
+    ? "Bot Discord configuré. Les codes de vérification peuvent être envoyés."
+    : "Le jeton du bot Discord n'est pas encore configuré. Renseigne DISCORD_BOT_TOKEN dans le fichier de configuration indiqué ci-dessus, puis redémarre Nexora Browser.";
+
+  $("serviceInfo").textContent =
+    "Adresse locale : " + setup.serviceUrl +
+    "\nAPI de recherche externe : " + (setup.indexerUpstream || "non configurée");
+
+  $("configInfoApp").textContent =
+    "Configuration : " + setup.configPath +
+    "\nLogs : " + setup.logsPath;
+}
+
+async function refreshAll() {
+  if (!me) return;
+
+  await loadJobs();
+  await loadPages();
+
+  try {
+    await refreshSetup();
+  } catch (_) {}
+}
+
+async function loadAdmin() {
+  if (!me || me.role !== "admin") return;
+
+  try {
+    const data = await api("/api/admin/users");
+    const container = $("adminUsers");
+    container.replaceChildren();
+
+    for (const user of data.users || []) {
+      const card = document.createElement("article");
+      card.className = "user-item";
+
+      const top = document.createElement("div");
+      top.className = "row";
+
+      const name = document.createElement("div");
+      name.className = "user-name";
+      name.textContent = user.username + (user.role === "admin" ? " · ADMIN" : "");
+
+      const badge = document.createElement("span");
+      badge.className = "badge " + (user.banned ? "red" : "good");
+      badge.textContent = user.banned ? "BANNI" : "ACTIF";
+
+      top.append(name, badge);
+
+      const info = document.createElement("div");
+      info.className = "result-snippet";
+      info.textContent =
+        "Discord : " + (user.discordId || "non renseigné") +
+        " · Créé : " + new Date(user.createdAt).toLocaleString("fr-FR") +
+        (user.banReason ? " · Motif : " + user.banReason : "");
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      if (user.role !== "admin" && !user.banned) {
+        const ban = document.createElement("button");
+        ban.className = "danger";
+        ban.textContent = "Bannir";
+        ban.addEventListener("click", async () => {
+          const reason = prompt("Motif du bannissement :", "Non-respect des règles");
+          if (reason === null) return;
+
+          try {
+            await api("/api/admin/ban", {
+              method: "POST",
+              body: JSON.stringify({ userId: user.id, reason })
+            });
+            await loadAdmin();
+          } catch (error) {
+            alert(error.message);
+          }
+        });
+
+        actions.appendChild(ban);
+      } else if (user.banned) {
+        const unban = document.createElement("button");
+        unban.className = "good";
+        unban.textContent = "Débannir";
+        unban.addEventListener("click", async () => {
+          try {
+            await api("/api/admin/unban", {
+              method: "POST",
+              body: JSON.stringify({ userId: user.id })
+            });
+            await loadAdmin();
+          } catch (error) {
+            alert(error.message);
+          }
+        });
+
+        actions.appendChild(unban);
+      }
+
+      card.append(top, info, actions);
+      container.appendChild(card);
+    }
+
+    const logs = await api("/api/admin/logs");
+    const logContainer = $("adminLogs");
+    logContainer.replaceChildren();
+
+    for (const event of logs.events || []) {
+      const div = document.createElement("div");
+      div.className = "log-item";
+
+      const strong = document.createElement("strong");
+      strong.textContent = "[" + new Date(event.time).toLocaleString("fr-FR") + "] " + event.action;
+
+      const details = document.createElement("div");
+      details.textContent = event.actor + " — " + event.message;
+
+      div.append(strong, details);
+      logContainer.appendChild(div);
+    }
+
+    if (!logs.events || !logs.events.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "Aucun événement enregistré.";
+      logContainer.appendChild(empty);
+    }
+
+    $("logPath").textContent = "Fichier de journal : " + logs.logFile;
+  } catch (error) {
+    const container = $("adminUsers");
+    container.replaceChildren();
+
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = error.message;
+    container.appendChild(empty);
+  }
+}
+
+$("guestLogin").addEventListener("click", async () => {
+  const button = $("guestLogin");
+  button.disabled = true;
+  message("guestMsg", "Création de ta session invité…");
+
+  try {
+    const data = await api("/api/auth/guest", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+
+    message("guestMsg", "Connexion invité réussie.", "good");
+    showApp(data.user);
+  } catch (error) {
+    message("guestMsg", error.message || "Impossible de créer la session invité.", "bad");
+  } finally {
+    button.disabled = false;
+  }
+});
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        username: $("loginUser").value,
+        password: $("loginPass").value
+      })
+    });
+
+    message("loginMsg", "Connexion réussie.", "good");
+    showApp(data.user);
+  } catch (error) {
+    message("loginMsg", error.message, "bad");
+  }
+});
+
+$("registerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const username = $("regUser").value.trim();
+
+    const data = await api("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        username,
+        password: $("regPass").value,
+        discordId: $("regDiscord").value.trim()
+      })
+    });
+
+    $("verifyUser").value = username;
+    message("registerMsg", data.message, "good");
+  } catch (error) {
+    message("registerMsg", error.message, "bad");
+  }
+});
+
+$("verifyForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({
+        username: $("verifyUser").value.trim(),
+        code: $("verifyCode").value.trim()
+      })
+    });
+
+    message("verifyMsg", "Compte vérifié.", "good");
+    showApp(data.user);
+  } catch (error) {
+    message("verifyMsg", error.message, "bad");
+  }
+});
+
+$("forgotForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/auth/forgot", {
+      method: "POST",
+      body: JSON.stringify({ username: $("forgotUser").value.trim() })
+    });
+
+    $("resetUser").value = $("forgotUser").value.trim();
+    message("forgotMsg", data.message, "good");
+  } catch (error) {
+    message("forgotMsg", error.message, "bad");
+  }
+});
+
+$("resetForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/auth/reset", {
+      method: "POST",
+      body: JSON.stringify({
+        username: $("resetUser").value.trim(),
+        code: $("resetCode").value.trim(),
+        password: $("resetPass").value
+      })
+    });
+
+    message("resetMsg", data.message || "Mot de passe modifié.", "good");
+  } catch (error) {
+    message("resetMsg", error.message, "bad");
+  }
+});
+
+$("bootstrapForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/admin/bootstrap", {
+      method: "POST",
+      body: JSON.stringify({
+        setupKey: $("setupKey").value,
+        username: $("adminUser").value.trim(),
+        password: $("adminPass").value,
+        discordId: $("adminDiscord").value.trim()
+      })
+    });
+
+    message("bootstrapMsg", data.message || "Administrateur créé.", "good");
+    showApp(data.user);
+  } catch (error) {
+    message("bootstrapMsg", error.message, "bad");
+  }
+});
+
+$("indexForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/index", {
+      method: "POST",
+      body: JSON.stringify({ url: $("indexURL").value.trim(), type: "url" })
+    });
+
+    message("indexMsg", "Tâche créée : " + data.job.id + ". Suivi disponible dans l'onglet Tâches.", "good");
+    await loadJobs();
+  } catch (error) {
+    message("indexMsg", error.message, "bad");
+  }
+});
+
+$("sitemapForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    const data = await api("/api/index/sitemap", {
+      method: "POST",
+      body: JSON.stringify({ sitemap: $("sitemapURL").value.trim(), type: "sitemap" })
+    });
+
+    message("sitemapMsg", "Sitemap soumis. Identifiant de tâche : " + data.job.id, "good");
+    await loadJobs();
+  } catch (error) {
+    message("sitemapMsg", error.message, "bad");
+  }
+});
+
+$("searchForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  try {
+    await loadSearch($("searchInput").value.trim());
+  } catch (error) {
+    message("searchMsg", error.message, "bad");
+  }
+});
+
+$("logout").addEventListener("click", logout);
+$("accountLogout").addEventListener("click", logout);
+
+async function logout() {
+  try {
+    await api("/api/auth/logout", { method: "POST", body: "{}" });
+  } catch (_) {}
+
+  showAuth();
+}
+
+document.querySelectorAll("[data-tab]").forEach(button => {
+  button.addEventListener("click", () => goTab(button.dataset.tab));
+});
+
+document.querySelectorAll("[data-goto]").forEach(button => {
+  button.addEventListener("click", () => goTab(button.dataset.goto));
+});
+
+$("refreshAll").addEventListener("click", async () => {
+  try {
+    await refreshSetup();
+    if (me) await refreshAll();
+  } catch (error) {
+    message("loginMsg", error.message, "bad");
+  }
+});
+
+$("refreshPages").addEventListener("click", loadPages);
+$("refreshJobs").addEventListener("click", loadJobs);
+$("refreshUsers").addEventListener("click", loadAdmin);
+$("refreshLogs").addEventListener("click", loadAdmin);
+
+async function init() {
+  try {
+    await refreshSetup();
+  } catch (error) {
+    $("statusLabel").textContent = "Service en attente";
+    $("discordHint").textContent = error.message;
+  }
+
+  try {
+    const data = await api("/api/me");
+    showApp(data.user);
+  } catch (_) {
+    showAuth();
+  }
+
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => {
+    if (me) {
+      loadJobs().catch(() => {});
+      if (document.querySelector('[data-panel="pages"]').classList.contains("active")) {
+        loadPages().catch(() => {});
+      }
+      if (document.querySelector('[data-panel="admin"]').classList.contains("active")) {
+        loadAdmin().catch(() => {});
+      }
+    }
+  }, 5000);
+}
+
+init();
+</script>
+</body>
+</html>

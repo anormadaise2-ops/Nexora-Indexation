@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Nexora — Nouvel onglet</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Segoe UI",Arial,sans-serif;background:#0a1020;color:#f1f5ff}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#315f9b48,transparent 48%),radial-gradient(ellipse at 90% 70%,#7140b225,transparent 40%),#0a1020}
+.page{width:min(970px,calc(100% - 36px));margin:auto;padding:36px 0 45px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:850}
+.logo,.mark{display:grid;place-items:center;background:linear-gradient(140deg,#75d6ff,#536bff 58%,#a36aff);color:white;box-shadow:0 8px 26px #5377ff40}
+.logo{width:34px;height:34px;border-radius:11px}
+.time{text-align:right;font-size:11px;line-height:1.7;color:#99abc7}
+#clock{font-size:15px;font-weight:800;color:white}
+.hero{text-align:center;padding-top:8vh}
+.mark{width:76px;height:76px;margin:auto auto 20px;border-radius:24px;font-weight:950;font-size:42px}
+h1{font-size:clamp(34px,5vw,52px);letter-spacing:-1.9px;line-height:1.12;margin:0}
+.subtitle{color:#9aacc7;font-size:14px;margin:14px 0 30px}
+.search{width:min(720px,100%);margin:auto;min-height:61px;display:flex;gap:10px;align-items:center;padding:7px 8px 7px 18px;border:1px solid #304260;border-radius:17px;background:#131f33;box-shadow:0 15px 44px #0003}
+.search:focus-within{border-color:#72b3ff;box-shadow:0 0 0 4px #548eff1c}
+.search-icon{font-size:22px;color:#8cb4ef}
+#query{flex:1;min-width:40px;height:42px;border:0;outline:0;background:transparent;color:white;font-size:13px;user-select:text}
+#engine{max-width:143px;height:37px;border-radius:9px;border:1px solid #354966;background:#1a2941;color:#e6efff;padding:0 6px;font-size:10px}
+.submit{height:43px;padding:0 15px;border:0;border-radius:10px;background:linear-gradient(135deg,#347fe7,#5966ee);color:white;font-weight:750;font-size:11px;cursor:pointer}
+.note{font-size:11px;color:#8194b2;margin-top:13px}
+.heading{display:flex;justify-content:space-between;gap:15px;align-items:center;margin:43px 0 15px;font-size:12px;font-weight:750}
+.heading small{font-size:10px;color:#7f91ad;font-weight:400}
+.tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.tile{min-height:105px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;border:1px solid #293a55;border-radius:15px;background:#121d30d9;color:#dfe9fb;text-decoration:none;font-size:11px;transition:transform .15s,border-color .15s}
+.tile:hover{transform:translateY(-3px);border-color:#638ac1;background:#1b2a43}
+.icon{width:42px;height:42px;display:grid;place-items:center;background:linear-gradient(140deg,#2b4364,#17243b);border:1px solid #ffffff12;border-radius:13px;font-size:19px}
+.info{margin-top:25px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid #293a55;border-radius:15px;background:linear-gradient(100deg,#152139,#11192a)}
+.info strong{font-size:12px}
+.info p{color:#9aacc7;font-size:11px;line-height:1.7}
+footer{text-align:center;color:#61748f;font-size:10px;margin-top:26px}
+@media(max-width:740px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding-top:5vh}.info{align-items:flex-start;flex-direction:column}}
+@media(max-width:460px){.search{flex-wrap:wrap;padding:12px}.search-icon{display:none}#query{flex-basis:100%}#engine{flex:1;max-width:none}.submit{flex:1}.page{padding-top:22px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <div class="brand"><div class="logo">N</div><span>NEXORA BROWSER</span></div>
+    <div class="time"><div id="clock">Bienvenue</div><div id="date"></div></div>
+  </header>
+  <section class="hero">
+    <div class="mark">N</div>
+    <h1>Le Web, à votre façon.</h1>
+    <p class="subtitle">Recherchez sur le Web et indexez vos propres sites.</p>
+    <form class="search" id="searchForm">
+      <span class="search-icon">⌕</span>
+      <input id="query" placeholder="Que souhaitez-vous rechercher ?" autocomplete="off" spellcheck="false" autofocus>
+      <select id="engine" aria-label="Moteur de recherche">
+        <option value="Nexora">Nexora Indexation</option>
+        <option value="Brave">Brave Search</option>
+        <option value="Google">Google</option>
+        <option value="Bing">Bing</option>
+        <option value="DuckDuckGo">DuckDuckGo</option>
+        <option value="Ecosia">Ecosia</option>
+        <option value="Qwant">Qwant</option>
+        <option value="Yahoo">Yahoo</option>
+        <option value="Startpage">Startpage</option>
+      </select>
+      <button class="submit" type="submit">Rechercher ↗</button>
+    </form>
+    <div class="note" id="engineNote">Recherche avec Nexora Indexation</div>
+  </section>
+
+  <div class="heading"><span>Accès rapides</span><small>Vos sites favoris</small></div>
+  <section class="tiles">
+    <a class="tile" href="https://www.youtube.com"><span class="icon">▶</span><span>YouTube</span></a>
+    <a class="tile" href="https://www.twitch.tv"><span class="icon">◉</span><span>Twitch</span></a>
+    <a class="tile" href="https://github.com"><span class="icon">⌘</span><span>GitHub</span></a>
+    <a class="tile" href="https://www.roblox.com"><span class="icon">◆</span><span>Roblox</span></a>
+    <a class="tile" href="https://mail.google.com"><span class="icon">✉</span><span>Gmail</span></a>
+    <a class="tile" href="https://www.wikipedia.org"><span class="icon">▤</span><span>Wikipédia</span></a>
+  </section>
+
+  <section class="info">
+    <div><strong>Votre espace Nexora</strong><p>Le bouton ⌕ dans la barre supérieure ouvre le tableau de bord.<br>Depuis celui-ci, créez un compte, indexez un site ou importez un sitemap XML.</p></div>
+  </section>
+  <footer>Nexora Browser · Nexora Indexation</footer>
+</main>
+<script>
+"use strict";
+
+const engines = {
+  Nexora: q => "nexora-search://search?q=" + encodeURIComponent(q),
+  Brave: q => "https://search.brave.com/search?q=" + encodeURIComponent(q),
+  Google: q => "https://www.google.com/search?q=" + encodeURIComponent(q),
+  Bing: q => "https://www.bing.com/search?q=" + encodeURIComponent(q),
+  DuckDuckGo: q => "https://duckduckgo.com/?q=" + encodeURIComponent(q),
+  Ecosia: q => "https://www.ecosia.org/search?q=" + encodeURIComponent(q),
+  Qwant: q => "https://www.qwant.com/?q=" + encodeURIComponent(q),
+  Yahoo: q => "https://search.yahoo.com/search?p=" + encodeURIComponent(q),
+  Startpage: q => "https://www.startpage.com/sp/search?query=" + encodeURIComponent(q)
+};
+
+const params = new URLSearchParams(location.search);
+const initialEngine = engines[params.get("engine")] ? params.get("engine") : "Nexora";
+$("engine").value = initialEngine;
+
+function $(id) { return document.getElementById(id); }
+
+function updateEngine() {
+  $("engineNote").textContent = "Recherche avec " +
+    ($("engine").value === "Nexora" ? "Nexora Indexation" : $("engine").value);
+}
+
+$("engine").addEventListener("change", updateEngine);
+
+$("searchForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const query = $("query").value.trim();
+
+  if (query) location.href = engines[$("engine").value](query);
+});
+
+function updateClock() {
+  const now = new Date();
+  $("clock").textContent = now.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  $("date").textContent = now.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+}
+
+updateEngine();
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>

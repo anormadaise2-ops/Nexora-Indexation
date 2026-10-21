@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Nexora Browser</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--bar:#111a2c;--line:#ffffff12;--text:#edf3ff;--muted:#95a7c4;--blue:#73b7ff}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{border:0;cursor:pointer;color:inherit;background:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.tabs{height:42px;display:flex;align-items:center;gap:8px;padding:5px 12px;background:#0b101d;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;flex:0 0 138px;font-size:14px;font-weight:850}
+.logo{width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:linear-gradient(140deg,#7ad6ff,#536aff 58%,#a36aff);font-size:15px}
+#tabList{min-width:0;flex:1;display:flex;gap:5px;overflow:auto;scrollbar-width:none}
+.tab{height:32px;display:flex;align-items:center;gap:7px;min-width:100px;max-width:220px;flex:1;padding:0 8px 0 10px;border-radius:9px 9px 0 0;background:#121c2e;color:#a9bad4;border:1px solid transparent;font-size:11px}
+.tab.active{background:#202d45;color:white;border-color:#ffffff17}
+.tab-main{flex:1;min-width:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.tab-close{width:22px;height:22px;border-radius:6px;font-size:16px;color:#9baec8}
+.tab-close:hover{background:#34455f;color:white}
+.new-tab{width:29px;height:29px;flex:0 0 29px;border-radius:8px;font-size:20px}
+.new-tab:hover,.navbtn:hover,.tool:hover{background:#ffffff12}
+.toolbar{height:51px;display:flex;align-items:center;gap:5px;padding:6px 10px;background:#111a2c;border-bottom:1px solid var(--line)}
+.navbtn,.tool{height:34px;min-width:34px;padding:0 8px;border-radius:9px;color:#cbd8eb;font-size:16px}
+.navbtn:disabled{opacity:.3;cursor:default}
+#addressForm{display:flex;align-items:center;gap:9px;height:36px;flex:1;min-width:60px;border:1px solid #2c3d59;background:#0b1322;border-radius:11px;padding:0 11px}
+#addressForm:focus-within{border-color:#70b0ff;box-shadow:0 0 0 3px #568eff19}
+#address{width:100%;min-width:0;background:transparent;border:0;outline:0;color:white;font-size:12px;user-select:text}
+#address::placeholder{color:#7d8fab}
+#engine{height:34px;max-width:133px;padding:0 5px;color:#dae7fc;background:#18243a;border:1px solid #30425e;border-radius:8px;font-size:10px}
+.shortcuts{height:32px;display:flex;align-items:center;gap:4px;overflow:hidden;padding:0 12px;background:#10192b;border-bottom:1px solid var(--line)}
+.shortcut{font-size:10px;color:#adbed6;border-radius:6px;padding:7px 9px;white-space:nowrap}
+.shortcut:hover{background:#ffffff10;color:white}
+.toast{position:fixed;z-index:20;top:136px;right:18px;max-width:380px;display:none;padding:10px 13px;background:#263955;border:1px solid #405e86;color:#eff5ff;border-radius:10px;font-size:11px;box-shadow:0 8px 25px #0005}
+.toast.show{display:block}
+@media(max-width:900px){.brand{flex-basis:85px}.brand span{display:none}.shortcuts .shortcut:nth-child(n+5){display:none}#engine{max-width:100px}.tool{min-width:28px;padding:0 4px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="tabs">
+    <div class="brand"><div class="logo">N</div><span>Nexora</span></div>
+    <div id="tabList"></div>
+    <button class="new-tab" id="newTab" title="Nouvel onglet (Ctrl+T)">+</button>
+  </div>
+  <div class="toolbar">
+    <button class="navbtn" id="back" title="Retour" disabled>‹</button>
+    <button class="navbtn" id="forward" title="Suivant" disabled>›</button>
+    <button class="navbtn" id="reload" title="Actualiser">↻</button>
+    <button class="navbtn" id="home" title="Accueil">⌂</button>
+    <form id="addressForm">
+      <span id="secureIcon">◇</span>
+      <input id="address" placeholder="Rechercher avec Nexora ou saisir une adresse" autocomplete="off" spellcheck="false">
+    </form>
+    <select id="engine" title="Moteur de recherche">
+      <option value="Nexora">Nexora</option>
+      <option value="Brave">Brave Search</option>
+      <option value="Google">Google</option>
+      <option value="Bing">Bing</option>
+      <option value="DuckDuckGo">DuckDuckGo</option>
+      <option value="Ecosia">Ecosia</option>
+      <option value="Qwant">Qwant</option>
+      <option value="Yahoo">Yahoo</option>
+      <option value="Startpage">Startpage</option>
+    </select>
+    <button class="tool" id="indexer" title="Ouvrir Nexora Indexation">⌕</button>
+    <button class="tool" id="shields" title="Nexora Shields">🛡</button>
+    <button class="tool" id="extensions" title="Extensions">🧩</button>
+    <button class="tool" id="bookmark" title="Ajouter aux favoris">☆</button>
+    <button class="tool" id="bookmarks" title="Favoris">▣</button>
+    <button class="tool" id="history" title="Historique">◷</button>
+    <button class="tool" id="downloads" title="Téléchargements">↓</button>
+    <button class="tool" id="settings" title="Paramètres">⚙</button>
+  </div>
+  <nav class="shortcuts">
+    <button class="shortcut" data-url="https://www.youtube.com">YouTube</button>
+    <button class="shortcut" data-url="https://www.twitch.tv">Twitch</button>
+    <button class="shortcut" data-url="https://github.com">GitHub</button>
+    <button class="shortcut" data-url="https://www.roblox.com">Roblox</button>
+    <button class="shortcut" data-url="https://mail.google.com">Gmail</button>
+    <button class="shortcut" data-url="https://www.wikipedia.org">Wikipédia</button>
+  </nav>
+</header>
+<div id="toast" class="toast"></div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let state = {tabs:[],activeId:null,defaultEngine:"Nexora",shieldsEnabled:true};
+
+function activeTab() {
+  return state.tabs.find(tab => tab.id === state.activeId) || null;
+}
+
+function toast(text) {
+  $("toast").textContent = text;
+  $("toast").classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => $("toast").classList.remove("show"), 3000);
+}
+
+function renderTabs() {
+  const container = $("tabList");
+  container.replaceChildren();
+
+  for (const tab of state.tabs) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "tab" + (tab.id === state.activeId ? " active" : "");
+
+    const label = document.createElement("button");
+    label.className = "tab-main";
+    label.textContent = tab.title || "Nouvel onglet";
+    label.title = tab.title || "Nouvel onglet";
+
+    const close = document.createElement("button");
+    close.className = "tab-close";
+    close.textContent = "×";
+    close.title = "Fermer l'onglet";
+
+    label.addEventListener("click", () => window.nexora.switchTab(tab.id));
+    close.addEventListener("click", () => window.nexora.closeTab(tab.id));
+
+    wrapper.append(label, close);
+    container.appendChild(wrapper);
+  }
+}
+
+function render(nextState) {
+  if (!nextState) return;
+  state = nextState;
+  renderTabs();
+
+  const tab = activeTab();
+
+  $("back").disabled = !tab || !tab.canGoBack;
+  $("forward").disabled = !tab || !tab.canGoForward;
+  $("reload").textContent = tab && tab.loading ? "×" : "↻";
+
+  if (tab && !tab.isHome && document.activeElement !== $("address")) {
+    $("address").value = tab.url || "";
+  } else if (tab && tab.isHome && document.activeElement !== $("address")) {
+    $("address").value = "";
+  }
+
+  $("engine").value = state.defaultEngine || "Nexora";
+
+  $("shields").textContent = state.shieldsEnabled === false ? "🛡 OFF" : "🛡";
+  $("shields").title = state.shieldsEnabled === false
+    ? "Activer Nexora Shields"
+    : "Nexora Shields actif";
+}
+
+$("addressForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const text = $("address").value.trim();
+  if (!text) return;
+  window.nexora.navigate(text);
+  $("address").blur();
+});
+
+$("address").addEventListener("focus", () => $("address").select());
+
+$("newTab").addEventListener("click", () => window.nexora.newTab());
+$("back").addEventListener("click", () => window.nexora.action("back"));
+$("forward").addEventListener("click", () => window.nexora.action("forward"));
+$("reload").addEventListener("click", () => window.nexora.action("reload"));
+$("home").addEventListener("click", () => window.nexora.action("home"));
+
+$("engine").addEventListener("change", () => window.nexora.setEngine($("engine").value));
+$("indexer").addEventListener("click", () => window.nexora.openIndexer());
+$("shields").addEventListener("click", () => window.nexora.toggleShields(state.shieldsEnabled === false));
+$("extensions").addEventListener("click", async () => {
+  try {
+    const result = await window.nexora.manageExtensions();
+    if (result && result.message) toast(result.message);
+  } catch (_) {
+    toast("Impossible de charger cette extension.");
+  }
+});
+
+$("bookmark").addEventListener("click", async () => {
+  try {
+    const result = await window.nexora.addBookmark();
+    if (result) toast("Page ajoutée aux favoris.");
+  } catch (_) {
+    toast("Impossible d'ajouter ce favori.");
+  }
+});
+
+$("bookmarks").addEventListener("click", () => window.nexora.showBookmarks());
+$("history").addEventListener("click", () => window.nexora.showHistory());
+$("downloads").addEventListener("click", () => window.nexora.openDownloads());
+$("settings").addEventListener("click", () => window.nexora.showSettings());
+
+document.querySelectorAll("[data-url]").forEach(button => {
+  button.addEventListener("click", () => window.nexora.navigate(button.dataset.url));
+});
+
+window.nexora.onState(render);
+window.nexora.onNotice(toast);
+window.nexora.onFocusAddress(() => {
+  $("address").focus();
+  $("address").select();
+});
+
+window.addEventListener("keydown", event => {
+  if (event.ctrlKey && event.key.toLowerCase() === "l") {
+    event.preventDefault();
+    $("address").focus();
+    $("address").select();
+  }
+
+  if (event.ctrlKey && event.key.toLowerCase() === "t") {
+    event.preventDefault();
+    window.nexora.newTab();
+  }
+
+  if (event.ctrlKey && event.key.toLowerCase() === "d") {
+    event.preventDefault();
+    window.nexora.addBookmark();
+  }
+
+  if (event.altKey && event.key === "ArrowLeft") {
+    event.preventDefault();
+    window.nexora.action("back");
+  }
+
+  if (event.altKey && event.key === "ArrowRight") {
+    event.preventDefault();
+    window.nexora.action("forward");
+  }
+});
+
+window.nexora.getState().then(render).catch(error => {
+  console.error(error);
+  toast("Impossible de charger l'état du navigateur.");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Téléchargements — Nexora Browser</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--card:#131e33;--line:#293953;--text:#edf3ff;--muted:#9aabc5;--blue:#71afff;--green:#55d5a0;--red:#ee8f9a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 100% 0%,#31568c35,transparent 42%),var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif}
+header{padding:25px 24px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0b1020ee;backdrop-filter:blur(12px);z-index:2}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:22px;margin:0;letter-spacing:-.4px}
+.subtitle{font-size:12px;color:var(--muted);margin-top:7px}
+button{cursor:pointer;border:1px solid #34445f;border-radius:9px;color:var(--text);background:#1b2940;padding:9px 12px;font-size:12px}
+button:hover{border-color:#6d9bd8;background:#243755}
+main{padding:12px 20px 30px}
+.summary{font-size:12px;color:var(--muted);padding:12px 2px}
+.item{margin:11px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(110deg,#142039,#10182a);box-shadow:0 8px 24px #0001}
+.row{display:flex;align-items:flex-start;gap:12px}
+.fileicon{width:39px;height:43px;flex:0 0 39px;display:grid;place-items:center;border-radius:10px;background:#263957;color:#b7d9ff;font-size:21px}
+.info{flex:1;min-width:0}
+.name{font-size:13px;font-weight:650;overflow-wrap:anywhere}
+.url{font-size:10px;color:#8496b2;margin-top:6px;overflow-wrap:anywhere}
+.state{font-size:11px;color:#aabbd4;margin-top:9px;display:flex;justify-content:space-between;gap:8px}
+.bar{height:8px;margin-top:10px;background:#26334a;border-radius:99px;overflow:hidden;position:relative}
+.fill{width:0;height:100%;border-radius:99px;background:linear-gradient(90deg,#4e88ff,#71bcff);transition:width .22s linear;position:relative;overflow:hidden}
+.fill.active:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 10px,#ffffff37 10px 18px);animation:stripe .8s linear infinite}
+.fill.complete{background:linear-gradient(90deg,#26ad7b,#6de2ad)}
+.fill.failed{background:linear-gradient(90deg,#b74c65,#ee8f9a)}
+@keyframes stripe{to{transform:translateX(18px)}}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
+button.primary{background:#2566c9;border-color:#4387ec}
+button.primary:hover{background:#2e79e6}
+.empty{margin:30px 0;padding:30px 18px;text-align:center;color:var(--muted);border:1px dashed #34445f;border-radius:14px;line-height:1.6}
+.pill{display:inline-flex;padding:5px 8px;border-radius:8px;background:#20324c;color:#b8c9e1;font-size:10px}
+@media(max-width:560px){header{padding:18px 13px}main{padding:8px 10px}.item{padding:12px}.state{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>⬇ Téléchargements</h1>
+    <button id="folder">Ouvrir le dossier</button>
+  </div>
+  <div class="subtitle">Suivi en temps réel de vos fichiers téléchargés par Nexora Browser.</div>
+</header>
+<main>
+  <div class="summary" id="summary">Chargement des téléchargements…</div>
+  <section id="list"></section>
+</main>
+<script>
+"use strict";
+const list = document.getElementById("list");
+const summary = document.getElementById("summary");
+
+function bytes(value) {
+  if (!Number.isFinite(value) || value < 0) return "0 o";
+  if (value < 1024) return value + " o";
+  const units = ["Ko", "Mo", "Go", "To"];
+  let n = value / 1024, i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(1) + " " + units[i];
+}
+
+function statusText(item) {
+  if (item.state === "completed") return "Terminé · " + bytes(item.totalBytes);
+  if (item.state === "cancelled") return "Annulé";
+  if (item.state === "interrupted") return "Interrompu";
+  const total = item.totalBytes > 0 ? bytes(item.totalBytes) : "taille inconnue";
+  const speed = item.speed > 0 ? " · " + bytes(item.speed) + "/s" : "";
+  return bytes(item.receivedBytes) + " / " + total + speed;
+}
+
+function render(items) {
+  list.replaceChildren();
+
+  const active = items.filter(x => x.state === "progressing").length;
+  const completed = items.filter(x => x.state === "completed").length;
+  summary.textContent = items.length + " fichier(s) · " + active + " en cours · " + completed + " terminé(s)";
+
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Aucun téléchargement pour le moment. Lorsqu'un fichier sera téléchargé, sa progression apparaîtra ici.";
+    list.appendChild(empty);
+    return;
+  }
+
+  for (const item of items) {
+    const card = document.createElement("article");
+    card.className = "item";
+
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const icon = document.createElement("div");
+    icon.className = "fileicon";
+    icon.textContent = item.state === "completed" ? "✓" : "↓";
+
+    const info = document.createElement("div");
+    info.className = "info";
+
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = item.filename || "Fichier téléchargé";
+
+    const url = document.createElement("div");
+    url.className = "url";
+    url.textContent = item.url || item.path || "";
+
+    const status = document.createElement("div");
+    status.className = "state";
+
+    const statusLabel = document.createElement("span");
+    statusLabel.textContent = statusText(item);
+
+    const percentage = document.createElement("span");
+    percentage.textContent = item.state === "completed" ? "100 %" :
+      (item.totalBytes > 0 ? item.percent + " %" : "En cours");
+
+    status.append(statusLabel, percentage);
+
+    const bar = document.createElement("div");
+    bar.className = "bar";
+
+    const fill = document.createElement("div");
+    fill.className = "fill";
+
+    const value = Math.max(0, Math.min(100, Number(item.percent) || 0));
+    fill.style.width = value + "%";
+
+    if (item.state === "progressing") fill.classList.add("active");
+    if (item.state === "completed") fill.classList.add("complete");
+    if (["interrupted", "cancelled"].includes(item.state)) fill.classList.add("failed");
+
+    bar.appendChild(fill);
+    info.append(name, url, status, bar);
+    row.append(icon, info);
+    card.appendChild(row);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    if (item.state === "completed") {
+      const open = document.createElement("button");
+      open.className = "primary";
+      open.textContent = "Ouvrir";
+      open.addEventListener("click", async () => {
+        const result = await window.nexora.openDownloadFile(item.id);
+        if (result && !result.ok) alert(result.message);
+      });
+
+      const show = document.createElement("button");
+      show.textContent = "Afficher dans le dossier";
+      show.addEventListener("click", () => {
+        window.nexora.openDownloadsFolder();
+      });
+
+      actions.append(open, show);
+    } else if (item.state === "progressing") {
+      const cancel = document.createElement("button");
+      cancel.textContent = "Annuler";
+      cancel.addEventListener("click", () => window.nexora.cancelDownload(item.id));
+      actions.appendChild(cancel);
+    } else {
+      const show = document.createElement("button");
+      show.textContent = "Ouvrir le dossier";
+      show.addEventListener("click", () => window.nexora.openDownloadsFolder());
+      actions.appendChild(show);
+    }
+
+    card.appendChild(actions);
+    list.appendChild(card);
+  }
+}
+
+document.getElementById("folder").addEventListener("click", () => {
+  window.nexora.openDownloadsFolder();
+});
+
+window.nexora.onDownloads(render);
+window.nexora.getDownloads().then(render).catch(() => {
+  summary.textContent = "Impossible de charger les téléchargements.";
+});
+</script>
+</body>
+</html>

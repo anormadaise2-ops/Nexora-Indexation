@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Nexora Browser</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bar: #101729;
+      --bar-2: #151e32;
+      --line: rgba(255,255,255,.08);
+      --text: #edf3ff;
+      --muted: #92a1bb;
+      --blue: #64a8ff;
+      --blue-2: #377cf6;
+      --hover: rgba(255,255,255,.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Segoe UI", Inter, system-ui, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      user-select: none;
+    }
+
+    button, input, select { font: inherit; }
+
+    button {
+      border: 0;
+      color: var(--text);
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+    }
+
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--blue);
+      outline-offset: 1px;
+    }
+
+    .tabbar {
+      height: 42px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 5px 12px 0;
+      background: #0a0f1c;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      flex: 0 0 142px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding-left: 5px;
+      color: #fff;
+      font-weight: 750;
+      letter-spacing: .2px;
+      font-size: 15px;
+    }
+
+    .brand-icon {
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      background: linear-gradient(140deg, #6bc9ff, #526cff 55%, #9a66ff);
+      box-shadow: 0 4px 16px #477aff42;
+    }
+
+    #tabList {
+      min-width: 0;
+      flex: 1;
+      height: 36px;
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    #tabList::-webkit-scrollbar { display: none; }
+
+    .tab {
+      min-width: 120px;
+      max-width: 230px;
+      flex: 0 1 220px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 9px 0 12px;
+      border: 1px solid transparent;
+      border-bottom: 0;
+      border-radius: 11px 11px 0 0;
+      color: #b5c0d5;
+      background: #111827;
+      text-align: left;
+    }
+
+    .tab:hover { background: #19243a; }
+
+    .tab.active {
+      color: #fff;
+      background: #202a40;
+      border-color: rgba(255,255,255,.07);
+    }
+
+    .tab-icon {
+      flex: 0 0 15px;
+      font-size: 13px;
+      opacity: .9;
+    }
+
+    .tab-title {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+
+    .tab-close {
+      flex: 0 0 21px;
+      width: 21px;
+      height: 21px;
+      padding: 0;
+      border-radius: 6px;
+      color: #a9b6ca;
+    }
+
+    .tab-close:hover { background: #37435b; color: white; }
+
+    .new-tab {
+      width: 29px;
+      height: 29px;
+      flex: 0 0 29px;
+      margin-bottom: 3px;
+      border-radius: 9px;
+      color: #dce6f8;
+      font-size: 20px;
+    }
+
+    .new-tab:hover { background: var(--hover); }
+
+    .toolbar {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-button, .tool-button {
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      color: #d1dcf0;
+      font-size: 18px;
+    }
+
+    .nav-button:hover, .tool-button:hover { background: var(--hover); }
+
+    .nav-button:disabled {
+      color: #4d5a70;
+      cursor: default;
+    }
+
+    #addressForm {
+      height: 37px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      min-width: 80px;
+      padding: 0 13px;
+      gap: 9px;
+      border: 1px solid #27334b;
+      background: #0c1322;
+      border-radius: 12px;
+      transition: border-color .14s, box-shadow .14s;
+    }
+
+    #addressForm:focus-within {
+      border-color: #5c9eff;
+      box-shadow: 0 0 0 3px #4d8dff1d;
+    }
+
+    .address-lock { color: #6ac7a4; font-size: 13px; }
+
+    #address {
+      min-width: 0;
+      width: 100%;
+      height: 32px;
+      border: 0;
+      outline: 0;
+      color: #f2f6ff;
+      background: transparent;
+      font-size: 13px;
+      user-select: text;
+    }
+
+    #address::placeholder { color: #6f7e97; }
+
+    #engineSelect {
+      width: 118px;
+      height: 34px;
+      border: 1px solid #29364f;
+      border-radius: 9px;
+      color: #e2ebfb;
+      background: #151e30;
+      font-size: 12px;
+      padding: 0 6px;
+      cursor: pointer;
+      outline: 0;
+    }
+
+    #engineSelect:hover { border-color: #536988; }
+
+    .bookmarkbar {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 16px;
+      overflow: hidden;
+      white-space: nowrap;
+      background: #101729;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .quick-link {
+      height: 25px;
+      padding: 0 10px;
+      border-radius: 7px;
+      color: #aebbd1;
+      font-size: 11px;
+      background: transparent;
+    }
+
+    .quick-link:hover { color: white; background: var(--hover); }
+
+    .separator {
+      height: 19px;
+      width: 1px;
+      flex: 0 0 1px;
+      margin: 0 3px;
+      background: #2a3448;
+    }
+
+    .toast {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 83px;
+      right: 20px;
+      max-width: 390px;
+      min-height: 28px;
+      padding: 7px 12px;
+      overflow: hidden;
+      color: #eaf2ff;
+      background: #253552;
+      border: 1px solid #415b82;
+      border-radius: 9px;
+      box-shadow: 0 8px 25px #0005;
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    .toast.show { display: block; }
+
+    .placeholder {
+      width: 100%;
+      height: calc(100vh - 126px);
+      background:
+        radial-gradient(ellipse at 15% 10%, #274d8440, transparent 40%),
+        radial-gradient(ellipse at 90% 75%, #643da226, transparent 42%),
+        #0b1020;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="tabbar">
+      <div class="brand">
+        <div class="brand-icon">N</div>
+        <span>Nexora</span>
+      </div>
+
+      <div id="tabList" aria-label="Onglets"></div>
+
+      <button class="new-tab" id="newTab" title="Nouvel onglet (Ctrl+T)">+</button>
+    </div>
+
+    <div class="toolbar">
+      <button class="nav-button" id="back" title="Retour" disabled>‹</button>
+      <button class="nav-button" id="forward" title="Suivant" disabled>›</button>
+      <button class="nav-button" id="reload" title="Actualiser">⟳</button>
+      <button class="nav-button" id="home" title="Accueil">⌂</button>
+
+      <form id="addressForm" autocomplete="off">
+        <span class="address-lock" id="securityIcon">◉</span>
+        <input
+          id="address"
+          type="text"
+          placeholder="Rechercher avec Nexora ou saisir une adresse"
+          spellcheck="false"
+          aria-label="Adresse ou recherche"
+        >
+      </form>
+
+      <select id="engineSelect" aria-label="Moteur de recherche" title="Moteur de recherche">
+        <option value="Brave">Brave Search</option>
+        <option value="Google">Google</option>
+        <option value="Bing">Bing</option>
+        <option value="DuckDuckGo">DuckDuckGo</option>
+        <option value="Ecosia">Ecosia</option>
+        <option value="Qwant">Qwant</option>
+        <option value="Yahoo">Yahoo</option>
+        <option value="Startpage">Startpage</option>
+      </select>
+
+      <button class="tool-button" id="bookmark" title="Ajouter aux favoris (Ctrl+D)">☆</button>
+      <button class="tool-button" id="bookmarks" title="Favoris">▣</button>
+      <button class="tool-button" id="history" title="Historique">◷</button>
+      <button class="tool-button" id="downloads" title="Téléchargements (Ctrl+J)">↓</button>
+      <button class="tool-button" id="settings" title="Paramètres">⚙</button>
+    </div>
+
+    <nav class="bookmarkbar" aria-label="Raccourcis">
+      <button class="quick-link" data-url="https://www.youtube.com">▶ YouTube</button>
+      <button class="quick-link" data-url="https://www.twitch.tv">◉ Twitch</button>
+      <button class="quick-link" data-url="https://github.com">⌘ GitHub</button>
+      <button class="quick-link" data-url="https://www.roblox.com">◆ Roblox</button>
+      <button class="quick-link" data-url="https://mail.google.com">✉ Gmail</button>
+      <button class="quick-link" data-url="https://www.wikipedia.org">▤ Wikipédia</button>
+    </nav>
+  </header>
+
+  <div class="placeholder" aria-hidden="true"></div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const tabList = document.getElementById("tabList");
+    const address = document.getElementById("address");
+    const addressForm = document.getElementById("addressForm");
+    const engineSelect = document.getElementById("engineSelect");
+    const backButton = document.getElementById("back");
+    const forwardButton = document.getElementById("forward");
+    const reloadButton = document.getElementById("reload");
+    const securityIcon = document.getElementById("securityIcon");
+    const toast = document.getElementById("toast");
+
+    let currentState = {
+      tabs: [],
+      activeId: null,
+      defaultEngine: "Brave",
+      bookmarks: [],
+      history: []
+    };
+
+    let toastTimer = null;
+
+    function activeTab() {
+      return currentState.tabs.find(tab => tab.id === currentState.activeId) || null;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+    }
+
+    function renderTabs() {
+      tabList.replaceChildren();
+
+      for (const tab of currentState.tabs) {
+        const button = document.createElement("button");
+        button.className = "tab" + (tab.id === currentState.activeId ? " active" : "");
+        button.title = tab.title || "Nouvel onglet";
+
+        const icon = document.createElement("span");
+        icon.className = "tab-icon";
+        icon.textContent = tab.isHome ? "✦" : (tab.url.startsWith("https://") ? "🔒" : "◉");
+
+        const title = document.createElement("span");
+        title.className = "tab-title";
+        title.textContent = tab.title || "Nouvel onglet";
+
+        const close = document.createElement("button");
+        close.className = "tab-close";
+        close.type = "button";
+        close.textContent = "×";
+        close.title = "Fermer l'onglet";
+
+        close.addEventListener("click", event => {
+          event.stopPropagation();
+          window.nexora.closeTab(tab.id);
+        });
+
+        button.append(icon, title, close);
+
+        button.addEventListener("click", () => {
+          window.nexora.switchTab(tab.id);
+        });
+
+        tabList.appendChild(button);
+      }
+    }
+
+    function render(state) {
+      if (!state) return;
+
+      currentState = state;
+      renderTabs();
+
+      const tab = activeTab();
+
+      backButton.disabled = !tab || !tab.canGoBack;
+      forwardButton.disabled = !tab || !tab.canGoForward;
+      reloadButton.textContent = tab && tab.loading ? "×" : "⟳";
+      reloadButton.title = tab && tab.loading ? "Arrêter le chargement" : "Actualiser";
+
+      if (tab && !tab.isHome) {
+        securityIcon.textContent = tab.url.startsWith("https://") ? "🔒" : "ⓘ";
+        securityIcon.style.color = tab.url.startsWith("https://") ? "#6ac7a4" : "#d8b56b";
+
+        if (document.activeElement !== address) {
+          address.value = tab.url;
+        }
+      } else {
+        securityIcon.textContent = "✦";
+        securityIcon.style.color = "#7bb8ff";
+
+        if (document.activeElement !== address) {
+          address.value = "";
+        }
+      }
+
+      engineSelect.value = state.defaultEngine || "Brave";
+    }
+
+    addressForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const value = address.value.trim();
+
+      if (value) {
+        window.nexora.navigate(value);
+        address.blur();
+      }
+    });
+
+    address.addEventListener("focus", () => {
+      address.select();
+    });
+
+    document.getElementById("newTab").addEventListener("click", () => {
+      window.nexora.newTab();
+    });
+
+    backButton.addEventListener("click", () => window.nexora.action("back"));
+    forwardButton.addEventListener("click", () => window.nexora.action("forward"));
+    reloadButton.addEventListener("click", () => window.nexora.action("reload"));
+    document.getElementById("home").addEventListener("click", () => window.nexora.action("home"));
+
+    document.getElementById("bookmark").addEventListener("click", async () => {
+      const added = await window.nexora.addBookmark();
+
+      if (added) {
+        document.getElementById("bookmark").textContent = "★";
+      }
+    });
+
+    document.getElementById("bookmarks").addEventListener("click", () => {
+      window.nexora.showBookmarks();
+    });
+
+    document.getElementById("history").addEventListener("click", () => {
+      window.nexora.showHistory();
+    });
+
+    document.getElementById("downloads").addEventListener("click", () => {
+      window.nexora.openDownloads();
+    });
+
+    document.getElementById("settings").addEventListener("click", () => {
+      window.nexora.showSettings();
+    });
+
+    engineSelect.addEventListener("change", () => {
+      window.nexora.setEngine(engineSelect.value);
+    });
+
+    document.querySelectorAll("[data-url]").forEach(button => {
+      button.addEventListener("click", () => {
+        window.nexora.navigate(button.dataset.url);
+      });
+    });
+
+    window.nexora.onState(render);
+    window.nexora.onNotice(showToast);
+    window.nexora.onFocusAddress(() => {
+      address.focus();
+      address.select();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (event.ctrlKey && event.key.toLowerCase() === "l") {
+        event.preventDefault();
+        address.focus();
+        address.select();
+      }
+
+      if (event.ctrlKey && event.key.toLowerCase() === "t") {
+        event.preventDefault();
+        window.nexora.newTab();
+      }
+
+      if (event.ctrlKey && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        window.nexora.addBookmark();
+      }
+
+      if (event.altKey && event.key === "ArrowLeft") {
+        event.preventDefault();
+        window.nexora.action("back");
+      }
+
+      if (event.altKey && event.key === "ArrowRight") {
+        event.preventDefault();
+        window.nexora.action("forward");
+      }
+    });
+
+    window.nexora.getState().then(render).catch(error => {
+      console.error("Impossible de récupérer l'état de Nexora :", error);
+      showToast("Impossible de charger l'interface du navigateur.");
+    });
+  </script>
+</body>
+</html>

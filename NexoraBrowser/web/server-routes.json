@@ -1,0 +1,43 @@
+{
+    "baseUrl":  "http://127.0.0.1:3080",
+    "sourceFound":  true,
+    "sourceFile":  "src/server.js",
+    "routes":  [
+                   {
+                       "method":  "GET",
+                       "path":  "/api/health"
+                   },
+                   {
+                       "method":  "GET",
+                       "path":  "/api/jobs"
+                   },
+                   {
+                       "method":  "GET",
+                       "path":  "/api/search"
+                   },
+                   {
+                       "method":  "GET",
+                       "path":  "/api/sites"
+                   },
+                   {
+                       "method":  "GET",
+                       "path":  "/api/sites/:id/pages"
+                   },
+                   {
+                       "method":  "POST",
+                       "path":  "/api/sites"
+                   },
+                   {
+                       "method":  "POST",
+                       "path":  "/api/sites/:id/crawl"
+                   },
+                   {
+                       "method":  "POST",
+                       "path":  "/api/sites/:id/sitemap"
+                   },
+                   {
+                       "method":  "POST",
+                       "path":  "/api/sites/:id/verify"
+                   }
+               ]
+}

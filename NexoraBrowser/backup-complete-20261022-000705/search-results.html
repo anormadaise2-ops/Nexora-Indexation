@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Résultats — Nexora Indexation</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--card:#121c30;--line:#293953;--text:#edf3ff;--muted:#9aabc5;--blue:#73b4ff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 10% 0%,#31568c30,transparent 38%),var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif}
+main{width:min(920px,calc(100% - 36px));margin:38px auto 70px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:.2px}
+.logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(140deg,#6bc9ff,#526cff 55%,#9a66ff);font-weight:900;font-size:20px}
+h1{margin:30px 0 7px;font-size:28px;letter-spacing:-.5px}
+.query{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.note{margin:20px 0;padding:13px 15px;background:#352719;border:1px solid #705333;border-radius:11px;color:#f0d2a4;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.meta{margin:24px 0 12px;color:#879ab8;font-size:12px}
+.card{padding:19px;margin:13px 0;border:1px solid var(--line);border-radius:14px;background:linear-gradient(110deg,#142039,#10182a);transition:border-color .15s,transform .15s}
+.card:hover{border-color:#5778a7;transform:translateY(-1px)}
+a.title{display:block;color:#91c4ff;text-decoration:none;font-size:17px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
+a.title:hover{text-decoration:underline}
+.url{margin:7px 0 8px;color:#73caa2;font-size:11px;overflow-wrap:anywhere}
+.snippet{color:#b4c1d7;font-size:13px;line-height:1.65;overflow-wrap:anywhere}
+.empty{margin-top:24px;padding:24px;border:1px dashed #3c4c68;border-radius:14px;color:#c1cce0;line-height:1.7}
+footer{margin-top:36px;color:#61738e;font-size:11px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><div class="logo">N</div><span>NEXORA INDEXATION</span></div>
+  <h1>Résultats de recherche</h1>
+  <div class="query" id="query"></div>
+  <div id="notice"></div>
+  <div class="meta" id="meta"></div>
+  <section id="results"></section>
+  <footer>Les résultats ci-dessous proviennent de l'API Nexora Indexation configurée sur cet appareil.</footer>
+</main>
+<script>
+"use strict";
+const params = new URLSearchParams(location.search);
+const query = params.get("q") || "";
+document.getElementById("query").textContent = "Recherche : " + query;
+
+function showNotice(text) {
+  if (!text) return;
+  const node = document.createElement("div");
+  node.className = "note";
+  node.textContent = text;
+  document.getElementById("notice").appendChild(node);
+}
+
+let items = [];
+try {
+  const b64 = params.get("data") || "";
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  items = JSON.parse(new TextDecoder().decode(bytes));
+  if (!Array.isArray(items)) items = [];
+} catch (_) {
+  items = [];
+}
+
+showNotice(params.get("error") || "");
+
+document.getElementById("meta").textContent =
+  items.length + (items.length > 1 ? " résultat(s) indexé(s)" : " résultat indexé");
+
+const section = document.getElementById("results");
+
+if (!items.length) {
+  const empty = document.createElement("div");
+  empty.className = "empty";
+  empty.textContent = params.get("error")
+    ? "Le service Nexora n'a pas fourni de résultats exploitables. Vérifie l'API de recherche de Nexora Indexation."
+    : "Aucun résultat indexé ne correspond à cette recherche. Essaie d'autres mots-clés ou indexe la page depuis Nexora Indexation.";
+  section.appendChild(empty);
+}
+
+for (const item of items) {
+  try {
+    const url = new URL(item.url);
+    if (!["http:", "https:"].includes(url.protocol)) continue;
+
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const title = document.createElement("a");
+    title.className = "title";
+    title.href = url.href;
+    title.textContent = item.title || url.hostname;
+    title.title = url.href;
+
+    const host = document.createElement("div");
+    host.className = "url";
+    host.textContent = url.href;
+
+    const snippet = document.createElement("div");
+    snippet.className = "snippet";
+    snippet.textContent = item.snippet || "Page présente dans l'index Nexora.";
+
+    card.append(title, host, snippet);
+    section.appendChild(card);
+  } catch (_) {}
+}
+</script>
+</body>
+</html>
