@@ -3,6 +3,7 @@
 <head>
   <meta name="nexora-site-verification" content="nexora-476947bd4d81409fb9b6d13435c2efdb">
 <meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0a1020">
 <meta name="description" content="Nexora Indexation — explorez le Web et retrouvez les pages indexées.">
@@ -64,12 +65,154 @@ function hideNotice(el){el.classList.remove('show');el.textContent=''}
 function endpoint(path){return (settings.apiBase||location.origin)+('/'+String(path||'').replace(/^\/+/,''))}
 async function request(url,opts={}){const res=await fetch(url,{...opts,headers:{Accept:'application/json',...(opts.body?{'Content-Type':'application/json'}:{}),...(opts.headers||{})}});const text=await res.text();let data;try{data=JSON.parse(text)}catch{throw new Error('Le serveur n’a pas retourné de JSON. Vérifiez l’URL de l’API et ses routes.')}if(!res.ok)throw new Error(data.message||data.error||('Erreur HTTP '+res.status));return data}
 function arrayResults(data){if(Array.isArray(data))return data;for(const k of ['results','items','pages','data'])if(Array.isArray(data?.[k]))return data[k];return []}
-function showResults(data){const box=$('#results');const rows=arrayResults(data);box.innerHTML='';box.style.display='block';const top=document.createElement('div');top.className='result-top';top.innerHTML='<span>Résultats transmis par Nexora</span><span>'+rows.length+' élément(s)</span>';box.append(top);if(!rows.length){const p=document.createElement('p');p.className='notice show';p.textContent='Aucun résultat trouvé dans la réponse du serveur. Vérifiez la structure de la réponse API.';box.append(p);return}rows.slice(0,30).forEach(item=>{const url=String(item.url||item.link||item.href||'#');const title=String(item.title||item.name||url);const desc=String(item.description||item.snippet||item.content||'Page présente dans la réponse de l’index.');const el=document.createElement('article');el.className='result';const a=document.createElement('a');a.className='url';a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=url;const h=document.createElement('h3');const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent=title;h.append(link);const p=document.createElement('p');p.textContent=desc;el.append(a,h,p);box.append(el)})}
-$('#searchForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('#query').value.trim();if(!q){$('#query').focus();return}const n=$('#searchNotice');hideNotice(n);$('#results').style.display='none';if(!settings.apiBase&&location.hostname.endsWith('github.io')){notice(n,'L’interface est publiée, mais aucun serveur de recherche n’est connecté. Ouvrez ⚙ Paramètres pour renseigner l’URL publique de l’API Nexora.');return}if(mode==='images'||mode==='news'){notice(n,'Ce mode n’est pas encore disponible. La recherche actuelle interroge uniquement les pages indexées par Nexora.');return}const path=settings.searchPath||'/api/search';const url=endpoint(path)+'?q='+encodeURIComponent(q)+'&query='+encodeURIComponent(q)+'&mode=indexed';try{const data=await request(url);showResults(data)}catch(err){notice(n,'Recherche indisponible : '+err.message+' — Configurez votre API dans ⚙ Paramètres.')}});
-$$('.mode').forEach(b=>b.addEventListener('click',()=>{$$('.mode').forEach(x=>x.classList.toggle('active',x===b));mode=b.dataset.mode;$('#query').placeholder=mode==='images'?'Images : bientôt disponibles…':mode==='news'?'Actualités : bientôt disponibles…':mode==='indexed'?'Chercher parmi les pages indexées…':'Rechercher dans les pages indexées par Nexora…';$('#query').focus()}));
-$$('[data-focus-search]').forEach(a=>a.addEventListener('click',()=>setTimeout(()=>$('#query').focus(),100)));$$('[data-mode-link]').forEach(a=>a.addEventListener('click',()=>{$$('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===a.dataset.modeLink));mode=a.dataset.modeLink}));
-$('#indexForm').addEventListener('submit',async e=>{e.preventDefault();const input=$('#siteUrl');const value=input.value.trim();if(!/^https?:\/\//i.test(value)){notice($('#indexNotice'),'Ajoutez une URL complète commençant par https:// ou http://.');return}hideNotice($('#indexNotice'));const btn=e.submitter;btn.disabled=true;btn.textContent='Envoi…';try{const data=await request(endpoint(settings.indexPath||'/api/sites'),{method:'POST',body:JSON.stringify({url:value,method:'meta'})});const token=data.verificationToken;if(token){notice($('#indexNotice'),'Propriété créée pour '+(data.origin||value)+'. Pour autoriser NexoraBot, ajoutez dans le <head>
-  <meta name="nexora-site-verification" content="nexora-476947bd4d81409fb9b6d13435c2efdb"> de votre site : Puis ouvrez Espace Webmaster pour vérifier la propriété et lancer l’exploration.')}else{notice($('#indexNotice'),data.message||'Demande transmise au serveur Nexora.')}toast('Propriété enregistrée')}catch(err){notice($('#indexNotice'),'Soumission impossible : '+err.message)}finally{btn.disabled=false;btn.textContent='Soumettre ↗'}});
+function showResults(data) {
+  const box = $('#results');
+  const rows = arrayResults(data);
+  box.innerHTML = '';
+  box.style.display = 'block';
+
+  const top = document.createElement('div');
+  top.className = 'result-top';
+  top.innerHTML = '<span>Résultats transmis par Nexora</span><span>' + rows.length + ' élément(s)</span>';
+  box.append(top);
+
+  if (!rows.length) {
+    const p = document.createElement('p');
+    p.className = 'notice show';
+    p.textContent = 'Aucun résultat trouvé dans la réponse du serveur.\nVérifiez la structure de la réponse API.';
+    box.append(p);
+    return;
+  }
+
+  rows.slice(0, 30).forEach(item => {
+    const url = String(item.url || item.link || item.href || '#');
+    const title = String(item.title || item.name || url);
+    const desc = String(item.description || item.snippet || item.content || 'Page présente dans la réponse de l’index.');
+
+    const el = document.createElement('article');
+    el.className = 'result';
+
+    const a = document.createElement('a');
+    a.className = 'url';
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = url;
+
+    const h = document.createElement('h3');
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = title;
+    h.append(link);
+
+    const p = document.createElement('p');
+    p.textContent = desc;
+
+    el.append(a, h, p);
+    box.append(el);
+  });
+}
+
+$('#searchForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const q = $('#query').value.trim();
+  if (!q) {
+    $('#query').focus();
+    return;
+  }
+
+  const noticeBox = $('#searchNotice');
+  hideNotice(noticeBox);
+  $('#results').style.display = 'none';
+
+  if (!settings.apiBase && location.hostname.endsWith('github.io')) {
+    notice(noticeBox, 'L’interface est publiée, mais aucun serveur de recherche n’est connecté.\nOuvrez Paramètres pour renseigner l’URL publique de l’API Nexora.');
+    return;
+  }
+
+  if (mode === 'images' || mode === 'news') {
+    notice(noticeBox, 'Ce mode n’est pas encore disponible.\nLa recherche actuelle interroge uniquement les pages indexées par Nexora.');
+    return;
+  }
+
+  const path = settings.searchPath || '/api/search';
+  const url = endpoint(path) + '?q=' + encodeURIComponent(q) + '&query=' + encodeURIComponent(q) + '&mode=indexed';
+
+  try {
+    const data = await request(url);
+    showResults(data);
+  } catch (err) {
+    notice(noticeBox, 'Recherche indisponible : ' + err.message + ' — Vérifiez les paramètres de l’API.');
+  }
+});
+
+$$('.mode').forEach(b => b.addEventListener('click', () => {
+  $$('.mode').forEach(x => x.classList.toggle('active', x === b));
+  mode = b.dataset.mode;
+  $('#query').placeholder =
+    mode === 'images' ? 'Images : bientôt disponibles…' :
+    mode === 'news' ? 'Actualités : bientôt disponibles…' :
+    mode === 'indexed' ? 'Chercher parmi les pages indexées…' :
+    'Rechercher dans les pages indexées par Nexora…';
+  $('#query').focus();
+}));
+
+$$('[data-focus-search]').forEach(a => {
+  a.addEventListener('click', () => setTimeout(() => $('#query').focus(), 100));
+});
+
+$$('[data-mode-link]').forEach(a => {
+  a.addEventListener('click', () => {
+    $$('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === a.dataset.modeLink));
+    mode = a.dataset.modeLink;
+  });
+});
+
+$('#indexForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const input = $('#siteUrl');
+  const value = input.value.trim();
+
+  if (!/^https?:\/\//i.test(value)) {
+    notice($('#indexNotice'), 'Ajoutez une URL complète commençant par https:// ou http://.');
+    return;
+  }
+
+  hideNotice($('#indexNotice'));
+
+  const btn = e.submitter;
+  btn.disabled = true;
+  btn.textContent = 'Envoi…';
+
+  try {
+    const data = await request(endpoint(settings.indexPath || '/api/sites'), {
+      method: 'POST',
+      body: JSON.stringify({ url: value, method: 'meta' })
+    });
+
+    const token = data.verificationToken;
+
+    if (token) {
+      notice(
+        $('#indexNotice'),
+        'Propriété créée pour ' + (data.origin || value) + '.\nPour autoriser NexoraBot, ajoutez dans le head de votre site la balise META fournie par Nexora, puis ouvrez Espace Webmaster pour vérifier la propriété et lancer l’exploration.'
+      );
+    } else {
+      notice($('#indexNotice'), data.message || 'Demande transmise au serveur Nexora.');
+    }
+
+    toast('Propriété enregistrée');
+  } catch (err) {
+    notice($('#indexNotice'), 'Soumission impossible : ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Soumettre ↗';
+  }
+});
 $('#settingsOpen').addEventListener('click',()=>$('#settingsModal').classList.add('open'));$('#settingsClose').addEventListener('click',()=>$('#settingsModal').classList.remove('open'));$('#settingsModal').addEventListener('click',e=>{if(e.target.id==='settingsModal')$('#settingsModal').classList.remove('open')});document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#settingsModal').classList.remove('open');if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();$('#query').focus()}});
 $('#themeToggle').addEventListener('click',()=>{settings.theme=settings.theme==='dark'?'light':'dark';apply()});$$('.swatch').forEach(b=>b.addEventListener('click',()=>{settings.accent=b.dataset.accentChoice;apply()}));$('#settingsSave').addEventListener('click',()=>{settings.apiBase=$('#apiBase').value.trim().replace(/\/$/,'');settings.searchPath=$('#searchPath').value.trim()||'/api/search';settings.indexPath=$('#indexPath').value.trim()||'/api/sites';localStorage.setItem('nx-api-base',settings.apiBase);localStorage.setItem('nx-search-path',settings.searchPath);localStorage.setItem('nx-index-path',settings.indexPath);$('#settingsModal').classList.remove('open');toast('Paramètres enregistrés sur cet appareil');checkApi()});$('#resetSettings').addEventListener('click',()=>{settings.apiBase='';settings.searchPath='/api/search';settings.indexPath='/api/sites';apply();toast('Paramètres réinitialisés')});
 async function checkApi(){const el=$('#apiStatus');if(!settings.apiBase&&location.hostname.endsWith('github.io')){el.textContent='À connecter';return}try{let res=await fetch((settings.apiBase||location.origin)+'/api/health',{headers:{Accept:'application/json'}});if(!res.ok)throw Error();el.innerHTML='<span class="statusdot"></span>Connectée';try{const d=await res.json();const n=d.indexedCount??d.pagesIndexed??d.count;if(n!==undefined)$('#indexedCount').textContent=Number(n).toLocaleString('fr-FR')}catch{}}catch{el.innerHTML='<span class="statusdot" style="background:var(--muted)"></span>À connecter'}}
