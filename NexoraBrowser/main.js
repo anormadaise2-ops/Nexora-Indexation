@@ -646,7 +646,7 @@ function normalizeNexoraResults(payload) {
 
 async function requestNexoraResults(query) {
   try {
-    const endpoint = "http://127.0.0.1:3081/api/search?q=" + encodeURIComponent(query);
+    const endpoint = "https://nexora-indexation.anormadaise2.workers.dev/api/search?q=" + encodeURIComponent(query);
     const response = await fetch(endpoint, {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(8000)

@@ -1,69 +1,44 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Résultats — Nexora</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#edf3ff;font-family:"Segoe UI",Arial,sans-serif}
-main{width:min(900px,calc(100% - 32px));margin:34px auto}
-.brand{font-size:14px;font-weight:800}
-h1{margin-top:27px;font-size:28px}
-#query{color:#9bacc6;font-size:12px;overflow-wrap:anywhere}
-.note,.result,.empty{padding:16px;margin:13px 0;border-radius:13px;border:1px solid #2a3b55;background:#121d30}
-.note{color:#efcf9d;border-color:#694e31;background:#2c2118;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
-.title{font-size:16px;color:#9bcaff;font-weight:700;overflow-wrap:anywhere}
-.url{font-size:11px;color:#74d1a7;margin-top:7px;overflow-wrap:anywhere}
-.snippet{font-size:12px;color:#b1c0d7;line-height:1.7;margin-top:9px}
-.empty{color:#9aacc7;font-size:12px;line-height:1.7}
-</style>
-</head>
-<body>
-<main>
-<div class="brand">✦ NEXORA INDEXATION</div>
-<h1>Résultats de recherche</h1>
-<div id="query"></div>
-<div id="notice"></div>
-<div id="count" style="color:#8295b2;font-size:11px;margin-top:18px"></div>
-<section id="results"></section>
-</main>
-<script>
+:root{color-scheme:dark;--bg:#090f1c;--card:#121e31;--line:#293a54;--text:#edf4ff;--muted:#91a4c1;--accent:#70e0ef;--purple:#9882ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0%,#182747 0,transparent 50%),var(--bg);color:var(--text);font:15px/1.55 "Segoe UI",Arial,sans-serif}main{width:min(980px,calc(100% - 32px));margin:34px auto}.brand{font-size:13px;letter-spacing:1.8px;font-weight:900;color:var(--accent)}h1{font-size:28px;margin:24px 0 6px}#query{color:var(--muted);overflow-wrap:anywhere}.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 16px}.toolbar label{font-size:12px;color:var(--muted)}select{min-width:210px;padding:10px 12px;border-radius:10px;background:#101b2d;color:var(--text);border:1px solid var(--line)}#count{font-size:12px;color:var(--muted);margin-left:auto}.result,.empty,.note{padding:18px;margin:12px 0;border-radius:15px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(23,36,58,.95),rgba(15,24,40,.96))}.title{font-size:18px;font-weight:750;line-height:1.35}.title a{color:#a8caff;text-decoration:none}.title a:hover{text-decoration:underline;color:var(--accent)}.url{display:block;font-size:12px;color:#6fe0b0;margin-top:7px;overflow-wrap:anywhere;text-decoration:none}.url:hover{text-decoration:underline}.snippet{font-size:13px;color:#b6c5dc;line-height:1.7;margin-top:10px;overflow-wrap:anywhere}.open{display:inline-block;margin-top:12px;padding:7px 10px;border:1px solid #45617d;border-radius:8px;color:var(--accent);font-size:12px;text-decoration:none}.open:hover{background:#1b2c44}.empty,.note{color:var(--muted);font-size:13px}.foot{color:#5f718e;font-size:11px;margin-top:26px}
+</style></head><body><main>
+<div class="brand">✦ NEXORA INDEXATION</div><h1>Résultats de recherche</h1><div id="query"></div>
+<div class="toolbar"><label for="siteFilter">Filtrer par site</label><select id="siteFilter"><option value="">Tous les sites indexés</option></select><div id="count"></div></div>
+<div id="notice"></div><section id="results"></section><div class="foot">Les résultats proviennent des pages effectivement indexées par Nexora. Cliquez sur un titre pour ouvrir le site dans un nouvel onglet.</div>
+</main><script>
 "use strict";
-const params=new URLSearchParams(location.search);
-const query=params.get("q")||"";
-document.getElementById("query").textContent="Recherche : "+query;
-let results=[];
-try{
- const raw=Uint8Array.from(atob(params.get("data")||""),c=>c.charCodeAt(0));
- results=JSON.parse(new TextDecoder().decode(raw));
- if(!Array.isArray(results))results=[];
-}catch(_){results=[];}
-const error=params.get("error")||"";
-if(error){
- const note=document.createElement("div");note.className="note";note.textContent=error;
- document.getElementById("notice").appendChild(note);
+const params = new URLSearchParams(location.search);
+const query = params.get("q") || "";
+document.getElementById("query").textContent = "Recherche : " + query;
+let results = [];
+try { const raw = Uint8Array.from(atob(params.get("data") || ""), c => c.charCodeAt(0)); results = JSON.parse(new TextDecoder().decode(raw)); if (!Array.isArray(results)) results = []; } catch (_) { results = []; }
+const error = params.get("error") || "";
+if (error) { const note=document.createElement("div"); note.className="note"; note.textContent=error; document.getElementById("notice").appendChild(note); }
+function validResult(item) { try { const u=new URL(String(item.url || "")); return (u.protocol === "https:" || u.protocol === "http:") ? u : null; } catch (_) { return null; } }
+const domains = [...new Set(results.map(item => { const u=validResult(item); return u ? u.hostname : ""; }).filter(Boolean))].sort();
+const filter = document.getElementById("siteFilter");
+for (const domain of domains) { const option=document.createElement("option"); option.value=domain; option.textContent=domain; filter.appendChild(option); }
+function render() {
+  const wanted=filter.value;
+  const list=results.filter(item => { const u=validResult(item); return u && (!wanted || u.hostname === wanted); });
+  document.getElementById("count").textContent=list.length + " résultat(s)";
+  const container=document.getElementById("results"); container.replaceChildren();
+  if (!list.length) { const empty=document.createElement("div"); empty.className="empty"; empty.textContent=error ? "Le moteur Nexora n'a pas répondu correctement : " + error : "Aucun résultat pour cette recherche dans les pages actuellement indexées. Ajoutez des sites publics au crawler et attendez la fin de l'exploration."; container.appendChild(empty); return; }
+  for (const item of list) {
+    const u=validResult(item); if (!u) continue;
+    const card=document.createElement("article"); card.className="result";
+    const h=document.createElement("div"); h.className="title";
+    const title=document.createElement("a"); title.href=u.href; title.target="_blank"; title.rel="noopener noreferrer"; title.textContent=String(item.title || u.hostname); h.appendChild(title);
+    const url=document.createElement("a"); url.className="url"; url.href=u.href; url.target="_blank"; url.rel="noopener noreferrer"; url.textContent=u.href;
+    const snippet=document.createElement("div"); snippet.className="snippet"; snippet.textContent=String(item.snippet || item.description || item.content || item.excerpt || "Page indexée par Nexora.");
+    const open=document.createElement("a"); open.className="open"; open.href=u.href; open.target="_blank"; open.rel="noopener noreferrer"; open.textContent="Ouvrir le site ↗";
+    card.append(h,url,snippet,open); container.appendChild(card);
+  }
 }
-document.getElementById("count").textContent=results.length+" résultat(s)";
-const container=document.getElementById("results");
-if(!results.length){
- const empty=document.createElement("div");empty.className="empty";
- empty.textContent=error
-  ?"Le service Nexora n'a pas fourni de résultats. Ouvre le tableau de bord Indexation pour vérifier le serveur."
-  :"Aucune page correspondante dans l'index Nexora. Indexe d'abord ton site ou son sitemap.";
- container.appendChild(empty);
-}
-for(const item of results){
- try{
-  const url=new URL(item.url);
-  if(!["http:","https:"].includes(url.protocol))continue;
-  const card=document.createElement("article");card.className="result";
-  const title=document.createElement("div");title.className="title";title.textContent=item.title||url.hostname;
-  const link=document.createElement("div");link.className="url";link.textContent=url.href;
-  const snippet=document.createElement("div");snippet.className="snippet";snippet.textContent=item.snippet||"Page présente dans l'index Nexora.";
-  card.append(title,link,snippet);container.appendChild(card);
- }catch(_){}
-}
-</script>
-</body>
-</html>
+filter.addEventListener("change",render); render();
+</script></body></html>

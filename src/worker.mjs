@@ -84,6 +84,23 @@ function parseSitemap(xml, base) {
   while ((m = re.exec(xml)) && out.length < 500) { try { const u = new URL(decodeEntities(m[1].trim()), base); if (["http:","https:"].includes(u.protocol)) out.push(u.href); } catch {} }
   return [...new Set(out)];
 }
+async function collectSitemapPageUrls(env, workerOrigin, siteOrigin, sitemapUrl, depth, budget) {
+  if (depth > 2 || budget.count >= 8) return [];
+  budget.count++;
+  const r = await assetAwareFetch(env, workerOrigin, sitemapUrl, "application/xml,text/xml,text/plain,*/*;q=0.2", 2500);
+  if (!r.ok) return [];
+  const xml = (await r.text()).slice(0, 500000);
+  const locs = parseSitemap(xml, sitemapUrl).filter(u => siteMatches(siteOrigin, u));
+  if (/<sitemapindex\b/i.test(xml)) {
+    const collected = [];
+    for (const child of locs.slice(0, 3)) {
+      if (budget.count >= 8) break;
+      try { collected.push(...await collectSitemapPageUrls(env, workerOrigin, siteOrigin, child, depth + 1, budget)); } catch {}
+    }
+    return [...new Set(collected)].slice(0, 100);
+  }
+  return locs;
+}
 function decodeHtmlText(html) {
   return decodeEntities(String(html).replace(/<!--[^]*?-->/g," ").replace(/<(script|style|noscript|svg|template)\b[^>]*>[^]*?<\/\1\s*>/gi," ").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()).slice(0, 30000);
 }
@@ -111,20 +128,24 @@ async function crawlSite(env, siteId, jobId, requestedSitemap, workerOrigin) {
   const DB = env.DB;
   try {
     const site = await first(DB.prepare("SELECT * FROM sites WHERE id = ?").bind(siteId));
-    if (!site || !site.verified) throw new Error("Site introuvable ou non vÃ©rifiÃ©.");
+    if (!site || (!site.verified && !site.is_public_seed)) throw new Error("Site introuvable ou non vÃ©rifiÃ©.");
     const candidates = [];
-    let sitemapUrl = requestedSitemap || site.last_submitted_sitemap || site.origin + "/sitemap.xml";
-    try { const su = new URL(sitemapUrl, site.origin); if (su.origin === site.origin) candidates.push(su.href); } catch {}
+    const requested = requestedSitemap || site.last_submitted_sitemap || "";
+    if (requested) { try { const su = new URL(requested, site.origin); if (su.origin === site.origin) candidates.push(su.href); } catch {} }
     const robotResponse = await assetAwareFetch(env, workerOrigin, site.origin + "/robots.txt", "text/plain,*/*;q=0.2", 2000).catch(() => null);
     const robotsText = robotResponse && robotResponse.ok ? (await robotResponse.text()).slice(0,50000) : "";
+    for (const sm of robotsText.matchAll(/^\s*sitemap:\s*(\S+)/gim)) {
+      try { const su = new URL(sm[1]); if (su.origin === site.origin) candidates.push(su.href); } catch {}
+    }
+    if (!candidates.length) candidates.push(site.origin + "/sitemap.xml");
     const disallow = robotsRules(robotsText);
     let queue = [];
-    for (const candidate of candidates) {
-      try {
-        const r = await assetAwareFetch(env, workerOrigin, candidate, "application/xml,text/xml,text/plain,*/*;q=0.2", 2500);
-        if (r.ok) { const xml = (await r.text()).slice(0, 500000); queue.push(...parseSitemap(xml,candidate).filter(u => siteMatches(site.origin,u))); }
-      } catch {}
+    const sitemapBudget = { count: 0 };
+    for (const candidate of [...new Set(candidates)].slice(0, 4)) {
+      if (sitemapBudget.count >= 8) break;
+      try { queue.push(...await collectSitemapPageUrls(env, workerOrigin, site.origin, candidate, 0, sitemapBudget)); } catch {}
     }
+    queue = [...new Set(queue.filter(u => siteMatches(site.origin, u)))];
     if (!queue.length) queue = [site.origin + "/"];
     queue = [...new Set(queue)].slice(0, 3);
     let crawled = 0, errors = 0;
@@ -179,16 +200,42 @@ export default {
           const q = String(url.searchParams.get("q") || "").trim().slice(0,200);
           if (q.length < 2) return json({ query:q, results:[] });
           const terms = q.toLowerCase().split(/\s+/).filter(Boolean).slice(0,8);
-          const searchRows = await rows(env.DB.prepare("SELECT p.url,p.title,p.description,p.text_content,p.canonical,s.origin FROM pages p JOIN sites s ON s.id=p.site_id WHERE p.status='indexed' AND s.verified=1 ORDER BY p.updated_at DESC LIMIT 500").bind());
+          const searchRows = await rows(env.DB.prepare("SELECT p.url,p.title,p.description,p.text_content,p.canonical,s.origin FROM pages p JOIN sites s ON s.id=p.site_id WHERE p.status='indexed' AND (s.verified=1 OR s.is_public_seed=1) ORDER BY p.updated_at DESC LIMIT 500").bind());
           const results = searchRows.map(p => { const hay = `${p.title||''} ${p.description||''} ${p.text_content||''} ${p.url}`.toLowerCase(); const score = terms.reduce((n,t)=>n+(hay.includes(t)?1:0),0); return score ? {url:p.canonical||p.url,title:p.title||p.url,description:p.description||(p.text_content||'').slice(0,220),score} : null; }).filter(Boolean).sort((a,b)=>b.score-a.score).slice(0,50);
           return json({ query:q, results });
         }
-        if (url.pathname === "/api/sites" || url.pathname === "/api/jobs" || /^\/api\/sites\//.test(url.pathname)) {
+        if (url.pathname === "/api/sites" || url.pathname === "/api/jobs" || url.pathname === "/api/seeds" || /^\/api\/sites\//.test(url.pathname)) {
           const denied = adminGuard(request, env); if (denied) return denied;
         }
-        if (url.pathname === "/api/sites" && request.method === "GET") {
+        if (url.pathname === "/api/seeds" && request.method === "POST") {
+          const b = await bodyJson(request);
+          if (!Array.isArray(b.urls) || !b.urls.length) return json({ error: "Fournis un tableau urls." }, 400);
+          if (b.urls.length > 3) return json({ error: "Maximum 3 domaines par demande pour préserver les quotas gratuits." }, 400);
+          const results = [];
+          for (const raw of [...new Set(b.urls.map(x => String(x || "")))]) {
+            let origin;
+            try { origin = normalizeSite(raw); publicUrl(origin + "/"); }
+            catch (e) { results.push({ input: String(raw).slice(0, 180), status: "rejected", error: String(e.message || e) }); continue; }
+            let site = await first(env.DB.prepare("SELECT id,origin,verified,is_public_seed,last_submitted_sitemap FROM sites WHERE origin=?").bind(origin));
+            if (!site) {
+              const siteId = id(), token = "public-seed-" + crypto.randomUUID().replace(/-/g, "");
+              await env.DB.prepare("INSERT INTO sites (id,origin,verified,verification_token,verification_method,created_at,sitemaps_json,is_public_seed) VALUES (?,?,0,?,'public-seed',?,'[]',1)").bind(siteId, origin, token, iso()).run();
+              site = { id: siteId, origin, verified: 0, is_public_seed: 1, last_submitted_sitemap: null };
+            } else {
+              await env.DB.prepare("UPDATE sites SET is_public_seed=1 WHERE id=?").bind(site.id).run();
+              site.is_public_seed = 1;
+            }
+            const running = await first(env.DB.prepare("SELECT id FROM jobs WHERE site_id=? AND status='running' LIMIT 1").bind(site.id));
+            if (running) { results.push({ origin, siteId: site.id, status: "already-running" }); continue; }
+            const jobId = id();
+            await env.DB.prepare("INSERT INTO jobs (id,site_id,status,started_at,crawled,errors) VALUES (?,?,'running',?,0,0)").bind(jobId, site.id, iso()).run();
+            ctx.waitUntil(crawlSite(env, site.id, jobId, String(site.last_submitted_sitemap || ""), url.origin));
+            results.push({ origin, siteId: site.id, jobId, status: "queued" });
+          }
+          return json({ ok: true, results, message: "Exploration publique lancée. Nexora respecte robots.txt et limite chaque tâche à 3 pages." }, 202);
+        }        if (url.pathname === "/api/sites" && request.method === "GET") {
           const list = await rows(env.DB.prepare("SELECT s.*, (SELECT COUNT(*) FROM pages p WHERE p.site_id=s.id AND p.status='indexed') AS page_count FROM sites s ORDER BY s.created_at DESC"));
-          return json(list.map(s=>({id:s.id,origin:s.origin,verified:!!s.verified,verificationToken:s.verification_token,verificationMethod:s.verification_method||"meta",createdAt:s.created_at,lastCrawlAt:s.last_crawl_at||null,lastSubmittedSitemap:s.last_submitted_sitemap||null,pageCount:s.page_count||0})));
+          return json(list.map(s=>({id:s.id,origin:s.origin,verified:!!s.verified,publicSeed:!!s.is_public_seed,verificationToken:s.verification_token,verificationMethod:s.verification_method||"meta",createdAt:s.created_at,lastCrawlAt:s.last_crawl_at||null,lastSubmittedSitemap:s.last_submitted_sitemap||null,pageCount:s.page_count||0})));
         }
         if (url.pathname === "/api/sites" && request.method === "POST") {
           const b = await bodyJson(request); const origin = normalizeSite(b.url);
@@ -219,7 +266,7 @@ export default {
         }
         m = url.pathname.match(/^\/api\/sites\/([^/]+)\/crawl$/);
         if (m && request.method === "POST") {
-          const sid=m[1], site=await first(env.DB.prepare("SELECT * FROM sites WHERE id=?").bind(sid)); if(!site||!site.verified)return json({error:"VÃ©rifie dâ€™abord la propriÃ©tÃ© du site."},403);
+          const sid=m[1], site=await first(env.DB.prepare("SELECT * FROM sites WHERE id=?").bind(sid)); if(!site||(!site.verified&&!site.is_public_seed))return json({error:"VÃ©rifie dâ€™abord la propriÃ©tÃ© du site."},403);
           const running=await first(env.DB.prepare("SELECT id FROM jobs WHERE site_id=? AND status='running' LIMIT 1").bind(sid)); if(running)return json({error:"Une exploration est dÃ©jÃ  en cours."},409);
           const b=await bodyJson(request), jobId=id(); await env.DB.prepare("INSERT INTO jobs (id,site_id,status,started_at,crawled,errors) VALUES (?,?,'running',?,0,0)").bind(jobId,sid,iso()).run();
           ctx.waitUntil(crawlSite(env,sid,jobId,String(b.sitemap||site.last_submitted_sitemap||site.origin+"/sitemap.xml"),url.origin));
@@ -228,8 +275,8 @@ export default {
         m = url.pathname.match(/^\/api\/sites\/([^/]+)\/pages$/);
         if (m && request.method === "GET") {
           const found=await first(env.DB.prepare("SELECT id FROM sites WHERE id=?").bind(m[1])); if(!found)return json({error:"Site introuvable."},404);
-          const pages=await rows(env.DB.prepare("SELECT id,url,title,description,status,http_status,canonical,error,updated_at FROM pages WHERE site_id=? ORDER BY updated_at DESC LIMIT 1000").bind(m[1]));
-          return json(pages.map(p=>({id:p.id,url:p.url,title:p.title,description:p.description,status:p.status,httpStatus:p.http_status,canonical:p.canonical,error:p.error,updatedAt:p.updated_at})));
+          const pages=await rows(env.DB.prepare("SELECT id,url,title,description,substr(text_content,1,500) AS preview,status,http_status,canonical,error,updated_at FROM pages WHERE site_id=? ORDER BY updated_at DESC LIMIT 1000").bind(m[1]));
+          return json(pages.map(p=>({id:p.id,url:p.url,title:p.title,description:p.description,preview:p.preview||"",status:p.status,httpStatus:p.http_status,canonical:p.canonical,error:p.error,updatedAt:p.updated_at})));
         }
         if (url.pathname === "/api/jobs" && request.method === "GET") {
           const jobs=await rows(env.DB.prepare("SELECT id,site_id,status,started_at,finished_at,crawled,errors,error FROM jobs ORDER BY started_at DESC LIMIT 30"));

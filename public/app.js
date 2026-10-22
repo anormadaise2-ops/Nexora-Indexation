@@ -1,4 +1,4 @@
-﻿const $ = (s) => document.querySelector(s);
+const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 let sites = [], pages = [], jobs = [], currentSiteId = null;
 const addDialog = $('#add-dialog'), siteDialog = $('#site-dialog');
@@ -32,11 +32,11 @@ async function api(url, options = {}) {
 function esc(s='') { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function shortDate(s) { if (!s) return 'Jamais'; const d = new Date(s); return Number.isNaN(d.getTime()) ? 'â€”' : d.toLocaleString('fr-FR', { dateStyle:'short', timeStyle:'short' }); }
 function siteCard(site) {
-  return `<article class="site-card" data-open="${esc(site.id)}"><div class="site-card-top"><div class="site-favicon">${esc(new URL(site.origin).hostname[0].toUpperCase())}</div><div><h4>${esc(new URL(site.origin).hostname)}</h4><div class="url">${esc(site.origin)}</div></div></div><span class="badge ${site.verified?'ok':''}">${site.verified?'âœ“ VÃ©rifiÃ©':'â— VÃ©rification requise'}</span><div class="site-card-bottom"><span>${site.pageCount} page(s) indexÃ©e(s)</span><span>${shortDate(site.lastCrawlAt)}</span></div></article>`;
+  return `<article class="site-card" data-open="${esc(site.id)}"><div class="site-card-top"><div class="site-favicon">${esc(new URL(site.origin).hostname[0].toUpperCase())}</div><div><h4>${esc(new URL(site.origin).hostname)}</h4><div class="url">${esc(site.origin)}</div></div></div><span class="badge ${site.verified||site.publicSeed?'ok':''}">${site.verified?'âœ“ VÃ©rifiÃ©':'â— VÃ©rification requise'}</span><div class="site-card-bottom"><span>${site.pageCount} page(s) indexÃ©e(s)</span><span>${shortDate(site.lastCrawlAt)}</span></div></article>`;
 }
 function renderSites() {
   $('#overview-sites').innerHTML = sites.length ? sites.slice(0,3).map(siteCard).join('') : '<div class="panel empty">Aucun site. Cliquez sur Â« Ajouter un site Â» pour commencer.</div>';
-  $('#sites-list').innerHTML = sites.length ? sites.map(s => `<div class="site-row"><div class="site-favicon">${esc(new URL(s.origin).hostname[0].toUpperCase())}</div><div class="site-info"><h4>${esc(new URL(s.origin).hostname)} <span class="badge ${s.verified?'ok':''}">${s.verified?'VÃ©rifiÃ©':'Ã€ vÃ©rifier'}</span></h4><p>${esc(s.origin)} Â· ${s.pageCount} page(s) indexÃ©e(s)</p></div><div class="row-actions"><button class="button outline" data-open="${esc(s.id)}">GÃ©rer</button>${s.verified?`<button class="button primary" data-crawl="${esc(s.id)}">Explorer</button>`:''}</div></div>`).join('') : '<div class="panel empty">Aucun site enregistrÃ© pour le moment.</div>';
+  $('#sites-list').innerHTML = sites.length ? sites.map(s => `<div class="site-row"><div class="site-favicon">${esc(new URL(s.origin).hostname[0].toUpperCase())}</div><div class="site-info"><h4>${esc(new URL(s.origin).hostname)} <span class="badge ${s.verified?'ok':''}">${s.publicSeed?'Exploration publique':s.verified?'VÃ©rifiÃ©':'Ã€ vÃ©rifier'}</span></h4><p>${esc(s.origin)} Â· ${s.pageCount} page(s) indexÃ©e(s)</p></div><div class="row-actions"><button class="button outline" data-open="${esc(s.id)}">GÃ©rer</button>${(s.verified||s.publicSeed)?`<button class="button primary" data-crawl="${esc(s.id)}">Explorer</button>`:''}</div></div>`).join('') : '<div class="panel empty">Aucun site enregistrÃ© pour le moment.</div>';
   const old = $('#page-site-filter').value;
   $('#page-site-filter').innerHTML = '<option value="">Tous les sites</option>' + sites.map(s => `<option value="${esc(s.id)}">${esc(new URL(s.origin).hostname)}</option>`).join('');
   $('#page-site-filter').value = old;
@@ -51,7 +51,7 @@ function renderJobs() {
 function renderPages() {
   const filter = $('#page-site-filter').value;
   const selected = pages.filter(p => !filter || p.siteId === filter);
-  $('#pages-list').innerHTML = selected.length ? `<div>${selected.map(p => `<div class="page-row"><div><strong>${esc(p.title || p.url)}</strong><small>${esc(p.url)}</small>${p.error?`<small class="error">${esc(p.error)}</small>`:''}</div><span class="badge ${p.status==='indexed'?'ok':''}">${esc(p.status)}</span><small>${p.httpStatus ? 'HTTP '+p.httpStatus : 'â€”'}<br>${shortDate(p.updatedAt)}</small></div>`).join('')}</div>` : '<div class="empty">Aucune page affichÃ©e. VÃ©rifiez un site puis lancez une exploration.</div>';
+  $('#pages-list').innerHTML = selected.length ? `<div>${selected.map(p => `<div class="page-row"><div><strong>${esc(p.title || p.url)}</strong><a style="display:block;color:#7dd3fc;overflow-wrap:anywhere" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.url)}</a><small>${esc(p.preview || p.description || "")}</small>${p.error?`<small class="error">${esc(p.error)}</small>`:''}</div><span class="badge ${p.status==='indexed'?'ok':''}">${esc(p.status)}</span><small>${p.httpStatus ? 'HTTP '+p.httpStatus : 'â€”'}<br>${shortDate(p.updatedAt)}</small></div>`).join('')}</div>` : '<div class="empty">Aucune page affichÃ©e. VÃ©rifiez un site puis lancez une exploration.</div>';
 }
 async function refresh() {
   try {
